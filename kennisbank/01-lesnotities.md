@@ -393,6 +393,28 @@
 
 **Examenvalkuil:** “Cosmos DB ondersteunt maar één regio” is alleen waar voor **serverless**. Bij provisioned throughput is wereldwijde distributie juist een kernfunctie.
 
+### Cosmos DB-consistentieniveaus
+
+Van sterk naar zwak:
+
+| Niveau | Wat garandeert het? | Wanneer passend? |
+|---|---|---|
+| **Strong** | Iedere read ziet de laatst bevestigde write. | Absolute actualiteit en globale volgorde zijn belangrijker dan latency en beschikbaarheid. |
+| **Bounded staleness** | Reads mogen hoogstens een ingesteld aantal versies of tijdseenheid achterlopen. | Voorspelbare maximale achterstand met behoud van volgorde. |
+| **Session** | Binnen dezelfde clientsessie gelden read-your-writes en geordende reads. | Meeste gebruikersgerichte apps; dit is standaard voor nieuwe accounts. |
+| **Consistent prefix** | Writes verschijnen altijd in de juiste volgorde, maar mogelijk met achterstand. | Volgorde is belangrijk, directe actualiteit niet. |
+| **Eventual** | Replica's worden uiteindelijk gelijk; tussentijds kunnen reads ouder en ongeordend zijn. | Maximale beschikbaarheid en lage latency bij weinig eisen aan actualiteit. |
+
+**Ezelsbrug:** **S**trong → **B**ounded staleness → **S**ession → Consistent **P**refix → **E**ventual.
+
+- Strong en bounded staleness kosten voor reads doorgaans ongeveer tweemaal zoveel RU als session, consistent prefix en eventual.
+- Een **session token** draagt de voortgang van een sessie over. Geef het token mee wanneer read-your-writes over verschillende SDK-instanties of processen behouden moet blijven.
+- De sentinel van Azure App Configuration staat hier los van: een Cosmos DB-session token gaat over databaseconsistentie.
+
+**Examentip:** kies het zwakste niveau dat nog aan de zakelijke eis voldoet. Dat geeft meestal betere latency, beschikbaarheid en lagere RU-kosten.
+
+Bron: https://learn.microsoft.com/en-us/azure/cosmos-db/consistency-levels
+
 ### Cosmos DB-smaken (API's)
 
 De API bepaalt welk datamodel, welke drivers en welke querytaal je gebruikt:

@@ -42,7 +42,7 @@ De resterende labs 04–24 volgen vrijwel exact deze gaten. Alleen labs uitvoere
 | Officiële vaardigheid | Status | Wat ontbreekt nog? |
 |---|---:|---|
 | Verbinden en query's uitvoeren met SDK | ❌ | Python `CosmosClient`, credentials, database/container, CRUD, parameters, pagination en foutafhandeling. |
-| Queryperformance en RUs optimaliseren met indexing en consistency | 🟡 | Indexen en partitions zijn sterk; de vijf consistency levels, session tokens en gevolgen voor latency/RUs ontbreken. |
+| Queryperformance en RUs optimaliseren met indexing en consistency | 🟡 | Indexen, partitions, de vijf consistency levels, session tokens en RU-gevolgen zijn beschreven; nog praktisch vergelijken in lab 11. |
 | Embeddings opslaan/ophalen en vector similarity search | ✅ | Praktisch uitvoeren en query metrics beoordelen in labs 09–11. |
 | Change feed processor implementeren | ❌ | Lease container, processor/worker, checkpoints, at-least-once verwerking en idempotentie. |
 
@@ -112,4 +112,3 @@ Labs 15–17 dekken dit. Pub/sub uit lab 16 is daarnaast nuttige praktijkkennis.
 - Kan ik de meest waarschijnlijke fout diagnosticeren?
 - Kan ik uitleggen welke instelling performance en kosten beïnvloedt?
 - Kan ik twee vergelijkbare Azure-diensten van elkaar onderscheiden?
-
