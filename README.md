@@ -4,12 +4,12 @@ Persoonlijke studieomgeving voor **Microsoft AI-200: Developing AI Cloud Solutio
 
 ## Inhoud
 
-- `00-overzicht.md` — ingang naar alle aantekeningen.
-- `01-lesnotities.md` — doorlopende cursusnotities.
-- `03-examenplan.md` — leerplan en examenstrategie.
-- `04-labtracker.md` — voortgang van de 24 verplichte labs.
-- `14-officiele-examengap-analyse.md` — dekking tegenover de officiële studiegids.
-- `17-online-oefenvraagbronnen.md` — beoordeling van openbare oefenbronnen.
+- `kennisbank/00-overzicht.md` — ingang naar alle aantekeningen.
+- `kennisbank/01-lesnotities.md` — doorlopende cursusnotities.
+- `kennisbank/03-examenplan.md` — leerplan en examenstrategie.
+- `kennisbank/04-labtracker.md` — voortgang van de 24 verplichte labs.
+- `kennisbank/14-officiele-examengap-analyse.md` — dekking tegenover de officiële studiegids.
+- `kennisbank/17-online-oefenvraagbronnen.md` — beoordeling van openbare oefenbronnen.
 - `ai-200-practice-exam/` — Engelstalige simulator met 130 gecontroleerde oefenvragen.
 
 Open `ai-200-practice-exam/dist/index.html` lokaal in een browser om de simulator te gebruiken. De simulator biedt een volledige sessie, een korte toets en een studiemodus met uitleg.
@@ -42,7 +42,7 @@ Zie ook `PRIVACY.md`.
 
 De inhoud is onafhankelijk studiemateriaal en geen officieel Microsoft-product. Technische antwoorden worden waar mogelijk gecontroleerd tegen Microsoft Learn. Externe oefenvragen worden herformuleerd; betaalde inhoud, examendumps en gelekte examenvragen worden niet opgenomen.
 
-Het lokale bestand `bron-oefenvragen.pdf` wordt daarom niet gepubliceerd. De bruikbare beoordeling ervan staat zonder gekopieerde vraagbank in `15-oefenvragen-bronbeoordeling.md`.
+Het lokale bestand `bron-oefenvragen.pdf` wordt daarom niet gepubliceerd. De bruikbare beoordeling ervan staat zonder gekopieerde vraagbank in `kennisbank/15-oefenvragen-bronbeoordeling.md`.
 
 Belangrijkste bronnen:
 
