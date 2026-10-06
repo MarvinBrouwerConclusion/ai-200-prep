@@ -14,6 +14,20 @@ Persoonlijke studieomgeving voor **Microsoft AI-200: Developing AI Cloud Solutio
 
 Open `ai-200-practice-exam/dist/index.html` lokaal in een browser om de simulator te gebruiken. De simulator biedt een volledige sessie, een korte toets en een studiemodus met uitleg.
 
+## Screenshots
+
+### Startscherm
+
+![AI-200 Exam Simulator startscherm](ai-200-practice-exam/docs/screenshots/exam-home.png)
+
+### Examenvraag met timer en navigatie
+
+![AI-200 oefenvraag](ai-200-practice-exam/docs/screenshots/question-screen.png)
+
+### Case study met informatietabbladen
+
+![AI-200 case study](ai-200-practice-exam/docs/screenshots/case-study.png)
+
 ## Privacy en AVG
 
 - De repository bevat geen namen van cursisten, privé-e-mailadressen, telefoonnummers, labaccounts, tijdelijke toegangscodes of ingevulde persoonlijke formulieren.
