@@ -22,7 +22,7 @@ Map: `ai-200-practice-exam`
 
 Lokale start: open `ai-200-practice-exam/dist/index.html`.
 
-De Engelstalige applicatie bevat 130 gecontroleerde vragen en vier modi:
+De Engelstalige applicatie bevat 263 gecontroleerde vragen en vier modi. Daarvan komen 133 vragen rechtstreeks uit de openbare moduletoetsen van alle 27 modules in de officiële AI-200-cursus:
 
 1. **Full simulation:** 50 vragen, 100 minuten, case study en een vastgezette Yes/No-set. Dit simuleert het officiële profiel zonder lab.
 2. **Quick assessment:** 20 vragen, 40 minuten.
@@ -57,4 +57,7 @@ De volledige simulatie gebruikt de officiële domeinwegingen als benadering. De 
 - https://aka.ms/examdemo
 - https://www.pearsonvue.com/us/en/microsoft.html
 
-Online oefenvragensites zijn alleen gebruikt om veelvoorkomende vraagpatronen te herkennen. De app kopieert hun vragen niet. Technische inhoud wordt gekoppeld aan officiële Microsoft-documentatie.
+Microsoft vermeldt op 6 oktober 2026 dat voor AI-200 nog geen officiële Practice Assessment beschikbaar is. De officiële Microsoft-vragen in de app zijn daarom moduletoetsvragen, geen vragen uit het echte certificeringsexamen. Online oefenvragensites zijn daarnaast gebruikt om veelvoorkomende vraagpatronen te herkennen. Hun betaalde inhoud wordt niet overgenomen.
+
+- https://learn.microsoft.com/en-us/credentials/certifications/azure-ai-cloud-developer-associate/
+- https://learn.microsoft.com/en-us/training/courses/ai-200t00

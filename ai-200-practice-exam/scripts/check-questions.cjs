@@ -8,8 +8,9 @@ const context = {window:{}};
 vm.runInNewContext(read('dist/questions.js'), context);
 const data = context.window.AI200_DATA;
 const all = [...data.QUESTION_BANK, ...data.CASES.flatMap(c => c.questions), ...data.LOCKED_SET.questions];
-assert.equal(all.length, 130);
-assert.equal(new Set(all.map(q => q.id)).size, 130);
+assert.equal(all.length, 263);
+assert.equal(new Set(all.map(q => q.id)).size, 263);
+assert.equal(all.filter(q => q.official).length, 133);
 const original = JSON.stringify(all);
 let seed = 123456;
 function shuffle(input) {
@@ -50,4 +51,4 @@ const escaped = form.trimEnd().replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
 assert.ok(preview.includes(escaped),'Preview must embed the current form');
 for(const script of form.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)) new vm.Script(script[1]);
 new vm.Script(read('dist/app.js'));
-console.log('PASS: 130 questions; 100 randomized runs; both cases meet domain ranges; answer mappings, source immutability, inline parity and script syntax checked.');
+console.log('PASS: 263 questions (133 official Microsoft Learn module-assessment items); 100 randomized runs; both cases meet domain ranges; answer mappings, source immutability, inline parity and script syntax checked.');

@@ -4,7 +4,8 @@ English-language practice application for AI-200. Open `dist/index.html` in a br
 
 ## Included
 
-- 130 verified practice questions mapped to the current AI-200 skills outline
+- 263 verified practice questions mapped to the current AI-200 skills outline
+- 133 verbatim Microsoft Learn module-assessment questions from all 27 modules in the official AI-200 course, with their official correct-answer explanations and source URLs
 - Free preview questions from external practice providers are reworded and checked against technical documentation
 - Full simulation: 50 questions in 100 minutes
 - Quick assessment: 20 questions in 40 minutes
@@ -18,7 +19,9 @@ English-language practice application for AI-200. Open `dist/index.html` in a br
 
 ## Important
 
-This is an independent study tool, not an official Microsoft product. Questions are original. The exact real-exam question count, order, case studies, and presence of labs can vary.
+This is an independent study tool, not an official Microsoft product. Microsoft Learn assessment items remain attributed to their source; the other questions are original or source-based adaptations. The exact real-exam question count, order, case studies, and presence of labs can vary.
+
+Microsoft currently states that an official AI-200 Practice Assessment is not available. The Microsoft questions included here come from the public module assessments in the official AI-200 course. They are genuine Microsoft learning questions, but they are not live exam questions.
 
 The 100-minute full simulation models Microsoft's associate/expert role-based exam profile without a lab. Microsoft says these exams usually contain 40–60 questions. Exams that may contain labs use a 120-minute exam profile. Check the real exam's introduction screen for its actual sections. For the official interface and question-type demonstration, use https://aka.ms/examdemo.
 
@@ -33,6 +36,8 @@ Technical review clarified Service Bus redelivery versus duplicate sends, ACR RB
 ## Primary references
 
 - https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/ai-200
+- https://learn.microsoft.com/en-us/credentials/certifications/azure-ai-cloud-developer-associate/
+- https://learn.microsoft.com/en-us/training/courses/ai-200t00
 - https://learn.microsoft.com/en-us/credentials/support/exam-duration-exam-experience
 - https://learn.microsoft.com/en-us/credentials/certifications/frequently-asked-questions
 - https://learn.microsoft.com/en-us/shows/exam-readiness-zone/what-to-expect-on-your-microsoft-exam

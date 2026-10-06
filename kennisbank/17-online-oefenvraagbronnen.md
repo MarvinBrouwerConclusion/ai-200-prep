@@ -2,24 +2,37 @@
 
 ## Vaste werkwijze
 
-1. Gebruik eerst bestaande, openbaar bereikbare AI-200-oefenvragen.
-2. Controleer het antwoord tegen actuele officiële Microsoft-documentatie.
-3. Herformuleer alleen wanneer dit nodig is voor duidelijkheid, actualiteit of auteursrecht.
-4. Vermeld de oefenbron en de officiële technische bron.
-5. Gebruik zelfgeschreven vragen alleen om ontbrekende examendoelen af te dekken.
-6. Neem alle gratis previewvragen mee, ook wanneer de rest van de vraagbank betaald is.
-7. Gebruik geen betaalde, gelekte of als examendump aangeboden vragen.
+1. Gebruik eerst echte Microsoft-vragen uit de officiële AI-200-leerpaden.
+2. Gebruik daarna bestaande, openbaar bereikbare AI-200-voorbeeldvragen.
+3. Controleer ieder niet-Microsoft-antwoord tegen actuele officiële Microsoft-documentatie.
+4. Herformuleer alleen wanneer dit nodig is voor duidelijkheid, actualiteit of auteursrecht.
+5. Vermeld de oefenbron en de officiële technische bron.
+6. Voeg geen zelfbedachte vragen toe zolang er echte voorbeeldvragen beschikbaar zijn.
+7. Neem alle gratis previewvragen mee, ook wanneer de rest van de vraagbank betaald is.
+8. Gebruik geen betaalde, gelekte of als examendump aangeboden vragen.
+
+## Officiële Microsoft-vragen
+
+Microsoft vermeldt op 6 oktober 2026 dat de officiële AI-200 Practice Assessment nog niet beschikbaar is. De officiële AI-200-cursus heeft wel 27 openbare modules met samen **133 moduletoetsvragen**. Deze 133 vragen, antwoordopties en uitleg zijn rechtstreeks met bronvermelding in de app opgenomen.
+
+- AI-200-certificeringspagina: https://learn.microsoft.com/en-us/credentials/certifications/azure-ai-cloud-developer-associate/
+- Officiële cursus met negen leerpaden: https://learn.microsoft.com/en-us/training/courses/ai-200t00
+- Officiële examenomgeving zonder AI-200-inhoudsvragen: https://aka.ms/examdemo
 
 ## Gecontroleerde gratis aantallen
 
 | Bron | Gratis beschikbaar | Gebruik |
 |---|---:|---|
+| Microsoft Learn AI-200-cursus | 133 moduletoetsvragen in 27 modules | Alle 133 exact en met bronvermelding verwerkt |
 | AI-200 Prep | 30 oefenvragen en een beperkte mock van 20 | Onderwerpen verwerkt en technisch controleren |
 | The Data Community | 2 openbare sets van 30 | 60 openbare vragen als inhoudsbron |
 | PrepifyLabs | 40 volgens de openbare productpagina | Gratis preview gebruiken zodra de vragen zonder omweg bereikbaar zijn |
 | ExamGuru | Een openbare sessie van 20 uit een bank van 69 | Alle 20 uit de openbare sessie verwerkt |
 | Ciply | 16 met een gratis account | Gratis set gebruiken; betaalde 424 niet kopiëren |
 | AzurePrep | 10 zonder betaald abonnement | Alle 10 verwerkt in de oefenapp |
+| CertSafari | 35 zonder account | Openbare set gevonden; gebruiken na technische controle en ontdubbeling |
+| Certifym | 15 zonder account | Openbare set gevonden; gebruiken na technische controle en ontdubbeling |
+| Mastery Exam Prep | 60 zonder account | Openbare set gevonden; gebruiken na technische controle en ontdubbeling |
 
 De aantallen zijn momentopnamen van 6 oktober 2026. Een aanbieder kan het gratis deel later wijzigen.
 
@@ -77,6 +90,21 @@ De aantallen zijn momentopnamen van 6 oktober 2026. Een aanbieder kan het gratis
 - De openbare productpagina vermeldt 40 gratis AI-200-vragen uit een betaalde bank van 700.
 - Alleen het zonder betaling vrijgegeven deel gebruiken.
 - https://prepifylabs.com/practice-exams/ai-200-developing-ai-cloud-solutions-on-azure
+
+### CertSafari
+
+- 35 openbare voorbeeldvragen verdeeld over de vier examendomeinen.
+- https://www.certsafari.com/azure/ai-200/practice-questions
+
+### Certifym
+
+- 15 openbare voorbeeldvragen zonder registratie.
+- https://certifym.net/microsoft-azure-ai-cloud-developer-ai-200-practice-questions-free-sample/
+
+### Mastery Exam Prep
+
+- 60 openbare voorbeeldvragen.
+- https://masteryexamprep.com/exams/microsoft/ai-200/free-practice-exam/
 
 ## Officiële controlebronnen
 
