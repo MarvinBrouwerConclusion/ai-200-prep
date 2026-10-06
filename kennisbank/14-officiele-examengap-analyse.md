@@ -66,7 +66,7 @@ Labs 12–14 zijn hiervoor essentieel.
 | Dataoperaties, caching, expiration en invalidation | ❌ | GET/SET, TTL/expiry, cache-aside, invalidatie, eviction en cache stampede. |
 | Vectorindexering en similarity search | ❌ | Index/schema maken, vectoren schrijven, KNN-query, metadatafilters en keuze tegenover Cosmos/PostgreSQL. |
 
-Labs 15–17 dekken dit. Pub/sub uit lab 16 is daarnaast nuttige praktijkkennis.
+Labs 15–17 dekken dit. Pub/sub uit lab 16 is daarnaast nuttige praktijkkennis. Redis Streams, consumer groups, pending messages, acknowledgments en crash recovery zijn als aanvullende kennis beschreven.
 
 ## 3. Azure-services verbinden en gebruiken — 20–25%
 

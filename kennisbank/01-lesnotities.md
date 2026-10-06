@@ -222,6 +222,73 @@
 - Voorbeeld foutpercentage: `sum(rate(payments_failed_total[5m])) / sum(rate(payments_total[5m])) * 100`.
 - Houd labels beperkt tot vaste categorieën zoals `service`, `region` en `status`. Gebruik geen ordernummer of klant-ID als label; dat veroorzaakt te veel unieke time series en hogere kosten.
 
+### Redis Streams: consumer groups, retries en crash recovery
+
+Een **Redis Stream** is een geordend logboek van berichten. Ieder bericht krijgt een unieke ID. Anders dan bij Redis Pub/Sub blijven streamberichten opgeslagen totdat retentie of verwijdering ze opruimt.
+
+| Commando | Functie |
+|---|---|
+| `XADD` | Voegt een bericht toe, bijvoorbeeld `XADD jobs * documentId 42`. Met `*` maakt Redis de ID. |
+| `XREAD` | Leest berichten zonder consumer group. De client bewaart zelf vanaf welke ID hij verder leest; er is geen Pending Entries List of acknowledgment. |
+| `XREADGROUP` | Levert berichten aan een consumer binnen een group. Met ID `>` vraag je nieuwe, nog niet aan de group geleverde berichten op. Geleverde berichten komen in de **Pending Entries List (PEL)**. |
+| `XPENDING` | Toont niet-bevestigde berichten, hun eigenaar, idle time en delivery count. Dit gebruik je voor monitoring en retrybeslissingen. |
+| `XACK` | Bevestigt succesvolle verwerking en verwijdert de referentie uit de PEL. Het streambericht zelf blijft bestaan. |
+| `XCLAIM` | Draagt opgegeven pending message-ID's na een minimale idle time over aan een andere consumer. |
+| `XAUTOCLAIM` | Zoekt en claimt automatisch een batch te lang idle pending berichten. Dit lijkt op `XPENDING` gevolgd door `XCLAIM`, maar scant met een cursor. |
+
+**Normale consumer-groupflow:**
+
+```text
+Producer --XADD--> stream
+                    |
+              XREADGROUP GROUP workers worker-1 >
+                    |
+              bericht staat pending in de PEL
+                    |
+             verwerken is succesvol
+                    |
+                   XACK
+                    |
+              weg uit de PEL
+```
+
+1. Maak een group, bijvoorbeeld met `XGROUP CREATE jobs workers 0 MKSTREAM`.
+2. Workers gebruiken ieder een unieke consumernaam en delen het werk binnen dezelfde group.
+3. `XREADGROUP ... >` levert ieder nieuw bericht aan één consumer binnen die group.
+4. Tijdens verwerking blijft het bericht pending.
+5. Bevestig pas **na succesvolle verwerking** met `XACK`.
+
+**Crash en recovery:**
+
+1. `worker-1` ontvangt een bericht en crasht vóór `XACK`.
+2. Het bericht blijft in de PEL staan en wordt niet vanzelf als nieuw bericht aan een andere consumer geleverd.
+3. Start dezelfde consumer opnieuw, dan kan hij met `XREADGROUP` en een ID zoals `0` zijn eigen pending historie opnieuw lezen.
+4. Komt die consumer niet terug, controleer dan met `XPENDING` welke berichten lang idle zijn en hoe vaak ze zijn aangeboden.
+5. Laat een gezonde consumer de berichten overnemen met `XCLAIM`, of gebruik `XAUTOCLAIM` om idle berichten automatisch in batches over te nemen.
+6. Verwerk opnieuw en voer daarna `XACK` uit.
+
+**Belangrijke gevolgen:**
+
+- Consumer groups leveren normaal **at-least-once**. Een crash kan dus tot dubbele verwerking leiden.
+- Maak verwerking **idempotent**, bijvoorbeeld met message-ID's of een verwerkte-status.
+- Gebruik idle time voordat je claimt; anders kunnen twee workers tegelijk aan hetzelfde langlopende werk zitten.
+- Stel een maximaal aantal retries in op basis van de delivery count uit `XPENDING`. Verplaats een blijvend fout bericht eventueel met `XADD` naar een aparte dead-letter stream en bevestig daarna het origineel.
+- Meerdere consumer groups kunnen dezelfde stream onafhankelijk verwerken. Binnen één group verdelen consumers de berichten.
+
+**Ezelsbrug:** lezen → **pending** → verwerken → **ack**. Bij een crash: **pending bekijken → claimen → opnieuw verwerken → ack**.
+
+Bronnen:
+
+- https://redis.io/docs/latest/develop/data-types/streams/
+- https://redis.io/docs/latest/commands/xadd/
+- https://redis.io/docs/latest/commands/xread/
+- https://redis.io/docs/latest/commands/xreadgroup/
+- https://redis.io/docs/latest/commands/xpending/
+- https://redis.io/docs/latest/commands/xack/
+- https://redis.io/docs/latest/commands/xclaim/
+- https://redis.io/docs/latest/commands/xautoclaim/
+
+
 ### Resource allocation, performance en kosten
 
 - Stel per container/replica de benodigde **CPU en memory** in. Te laag geeft throttling, trage responses of OOM-restarts; te hoog betekent betaalde capaciteit die vaak ongebruikt blijft.
