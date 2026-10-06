@@ -1,0 +1,867 @@
+# Lesnotities
+
+## Maandag 5 oktober 2026
+
+- Lesmateriaal staat in de bovenliggende cursusmap.
+- Onderwerp: voordelen van containerization.
+- Consistente omgeving: dezelfde container werkt lokaal, in test en productie.
+- Isolatie van applicaties en afhankelijkheden.
+- Snel en herhaalbaar uitrollen, schalen en vervangen.
+- Efficiënter en lichter dan volledige virtuele machines.
+- Schaalbaar: snel meer of minder instanties inzetten naar behoefte.
+- Budget: resources efficiënter gebruiken en kosten beperken door af te schalen.
+- AKS = Azure Kubernetes Service: Microsofts beheerde Kubernetes-dienst in Azure.
+- Controleer regelmatig de Azure-roadmap om komende functies en wijzigingen vroeg te zien.
+- Filter de roadmap via **Products** op relevante Azure-producten.
+- Automatisering: controleer de officiële Azure Updates-RSS periodiek en filter zelf op AI-200-producten; productfilters voor RSS zijn niet officieel gedocumenteerd.
+
+### Hybrid en lokaal
+
+- Azure Stack Hub: Azure-services uitvoeren in een eigen datacenter, ook disconnected mogelijk.
+- Windows Azure Pack: oudere on-premises cloudlaag voor Windows Server en System Center.
+- Azure Local: huidige naam voor Azure Stack HCI; Azure Arc-enabled infrastructuur op eigen hardware.
+- Officiële huidige productnaam: **Azure Local**. **Azure Stack Hub** blijft een aparte bestaande naam.
+- Windows Azure Pack werd afgekort tot WAP. Volgens de les was dit geen sterk product.
+- Azure Stack volgde later als nieuwe productfamilie; dit was geen simpele naamswijziging van WAP. De naam Azure Stack komt nog voor, vooral bij Azure Stack Hub en oudere documentatie.
+- Praktijkvoorbeeld uit de les: KPN werkte al langere tijd met Azure Stack.
+
+### Identiteit
+
+- Microsoft Entra ID: cloudgebaseerde identity- en directoryservice; vroeger Azure AD.
+- Directoryservice: bewaart en beheert identiteiten, groepen en toegangsgegevens.
+- Domain controller: server die Active Directory Domain Services lokaal uitvoert en authenticatie afhandelt.
+- Entra ID is geen klassieke domain controller.
+- Entra ID beheert objecten zoals gebruikers, groepen, apparaten en niet-persoonsgebonden accounts (NPA's).
+- Gebruikers en apparaten kunnen via groepen gezamenlijk toegang, rollen of beleid krijgen; het is geen strikte hiërarchie.
+- Microsoft Entra ID P2 is een licentieniveau met geavanceerde identity security en governance, waaronder Identity Protection en Privileged Identity Management.
+- AVD = Azure Virtual Desktop: desktops en applicaties virtueel aanbieden vanuit Azure.
+- AVD is een alternatief voor Citrix; Citrix kan ook als beheerlaag met AVD samenwerken.
+- Azure DevOps: platform voor repositories, CI/CD-pipelines, werkplanning, testen en artifacts.
+- Azure DevOps is een aparte organisatie/service; betaald gebruik wordt aan een gekoppelde Azure-subscription gefactureerd.
+- De organisatie kan voor identiteit aan een Microsoft Entra ID-tenant worden gekoppeld.
+- Onze omgeving draait volgens de les fysiek in Nederland; Microsoft toont dit publiek als de bredere geografie **Europe**.
+- Juridisch aandachtspunt: een geldige Amerikaanse CLOUD Act-vordering kan een Amerikaanse provider verplichten data te verstrekken die onder zijn beheer valt, ongeacht de opslaglocatie.
+- Doorslaggevend is vooral Microsofts bezit, beheer of zeggenschap over de data; alleen fysieke opslag in Nederland voorkomt Amerikaanse rechtsmacht niet automatisch.
+- Dit is geen vrije, rechtstreekse toegang voor inlichtingendiensten. Microsoft zegt verzoeken juridisch te toetsen, waar mogelijk aan te vechten en klanten te informeren, tenzij dit wettelijk verboden is.
+- De uitspraak dat Microsoft deze ontwikkeling vooraf zag aankomen is een bewering uit de les en hier niet geverifieerd.
+- Europese constructie: Microsoft Ireland Operations Limited bezit de Europese datacenterentiteiten; sinds 26 juni 2025 houdt een volledig Europees bestuur toezicht.
+- Dit is Europese governance binnen de Microsoft-groep, geen volledig onafhankelijke Europese Microsoft-organisatie.
+- Terminologie in de les: **Native Azure** = de gewone Azure public-cloudomgeving, tegenover Azure Local/hybride infrastructuur.
+- Azure Local draait op gevalideerde eigen hardware met Azure Local OS, Hyper-V, Storage Spaces Direct en Azure Arc.
+- Ondersteunt onder meer VM's, AKS, AVD en geselecteerde Arc-enabled services; niet iedere Azure/Arc-service is overal beschikbaar.
+- Microsoft 365 Local is inmiddels algemeen beschikbaar op ondersteunde Azure Local Premier Solutions.
+- Disconnected operations gebruikt een lokale control plane en vereist kwalificatie; het dienstenaanbod is kleiner dan bij connected Azure Local.
+- Onderschat een Kubernetes-farm/cluster niet: het is een groot en complex platform met veel onderdelen, beheer en operationele verantwoordelijkheid.
+- Grote organisaties hebben daarom vaak een apart Kubernetes- of platformteam.
+- Container registry: vergelijkbaar met een library server; een centrale bibliotheek voor containerimages en versies.
+- Vergelijkbaar met een NuGet-feed: NuGet bewaart softwarepackages, een container registry bewaart containerimages.
+- Platformonafhankelijk onderdeel van vrijwel iedere containerworkflow; kan beheerd of zelf gehost zijn.
+- Staat los van Windows Registry en `regedit`.
+- De organisatie bepaalt welke images en versies worden bewaard, bijgewerkt, gescand en uiteindelijk verwijderd.
+- Kubernetes Pod: kleinste deploybare eenheid, met één of meer containers die netwerk, opslag en lifecycle delen.
+- Netflix-analogie uit de les: kijkers gebruiken dezelfde dienst met eigen streams. Technisch krijgt niet iedere kijker een eigen Pod; meerdere gebruikers kunnen één Pod delen en Kubernetes schaalt met extra Pod-replica's.
+- Als een Pod zijn ingestelde capaciteits- of belastingdrempel bereikt, kan autoscaling extra Pod-replica's starten.
+- ACR = Azure Container Registry: Microsofts beheerde container registry in Azure.
+- ACR en ACR Tasks kunnen worden aangemaakt en beheerd via Azure CLI, PowerShell, Bicep/ARM en Terraform.
+- ACR-tagging: geef productie-images een unieke tag, bijvoorbeeld versienummer, build-ID of Git-commit. Gebruik `latest` niet als enige productieversie.
+- Lock een uitgerolde productietag door schrijven uit te zetten (`write-enabled=false`); zet ook verwijderen uit (`delete-enabled=false`) als het image bewaard moet blijven.
+- Opruimen: een ACR-retentiebeleid kan untagged manifests na een ingesteld aantal dagen automatisch verwijderen. Dit is momenteel preview en alleen beschikbaar in Premium ACR.
+- Let op: untaggen verwijdert alleen de tag; manifest en lagen blijven bestaan totdat ze expliciet of via retentie worden verwijderd. Retentie geldt alleen voor manifests die na inschakeling untagged worden.
+- Verwijder geen untagged manifest dat nog via zijn digest wordt gebruikt; een volgende pull werkt dan niet meer.
+- Nu in de les: Azure App Service.
+- Azure App Service kan containerized werken: je kunt een eigen containerimage deployen, bijvoorbeeld vanuit ACR.
+- App Service ondersteunt ook deployment van applicatiecode zonder eigen container; Azure beheert dan de runtime en onderliggende infrastructuur.
+- App Service deployment slots: naast productie kun je bijvoorbeeld een `staging`-slot maken.
+- Met een slot swap wissel je staging en productie. De nieuwe versie kan vooraf opwarmen en testen, waardoor de downtime doorgaans vrijwel nihil is.
+- In een `preprod`-slot kun je de nieuwe versie alvast volledig starten en controleren; daarna swap je deze naar het productieslot.
+- Instellingen kunnen als *deployment slot setting* worden gemarkeerd; deze blijven bij hun eigen slot en wisselen niet mee.
+- Nadeel: alle slots binnen hetzelfde App Service Plan delen dezelfde VM-capaciteit, waaronder CPU en geheugen. Een zwaar preprod-slot of het opwarmen daarvan kan daardoor de productieprestaties beïnvloeden.
+- Alternatief: draai productie en preprod op aparte App Service Plans en laat een router/load balancer de productie-URL naar de nieuwe omgeving sturen. Dit geeft betere resource-isolatie, maar kost meer en is complexer.
+- Mogelijke Azure-diensten hiervoor zijn Azure Front Door of Application Gateway; Traffic Manager stuurt verkeer via DNS.
+- Examenfocus: dit alternatief met aparte omgevingen en verkeersroutering is vooral praktijkkennis en waarschijnlijk geen directe AI-200-examenvraag.
+- Identiteit: een App Service kan een niet-persoonsgebonden identiteit gebruiken. De officiële Azure-term is *managed identity* in Microsoft Entra ID.
+- Met RBAC geef je deze identiteit toegang tot bijvoorbeeld Key Vault, Storage of ACR, zonder gebruikersaccount of wachtwoord in de applicatiecode.
+- Er zijn twee typen managed identities:
+  - **System-assigned:** hoort bij precies één Azure-resource en wordt automatisch verwijderd wanneer die resource wordt verwijderd.
+  - **User-assigned:** is een losse Azure-resource, kan aan meerdere resources worden gekoppeld en blijft bestaan wanneer een gekoppelde resource wordt verwijderd.
+- Een user-assigned identity maak en beheer je zelf: je koppelt hem aan de gewenste Azure-resource(s) en kent afzonderlijk de benodigde RBAC-rollen toe.
+- Correctie: user-assigned is niet legacy. Microsoft adviseert user-assigned zelfs voor veel scenario's; system-assigned past goed wanneer iedere resource een eigen identiteit moet hebben en dezelfde lifecycle moet volgen.
+- Standpunt docent: system-assigned heeft in de praktijk de voorkeur en wordt tegenwoordig meer gebruikt; user-assigned vraagt handmatig beheer en koppeling.
+- Examenbron: de actuele Microsoft-documentatie adviseert user-assigned voor de meeste scenario's. De juiste keuze blijft afhankelijk van de vraag: system-assigned voor één resource met dezelfde lifecycle; user-assigned voor hergebruik, vooraf ingestelde rechten of meerdere resources.
+- Keuzeregel managed identity:
+  - Gebruik **system-assigned** vaker voor één losse resource met eigen rechten, duidelijke auditlogging en automatische verwijdering van de identiteit met de resource.
+  - Gebruik **user-assigned** vaker wanneer meerdere resources dezelfde rechten nodig hebben, de identiteit vooraf moet bestaan of onafhankelijk van resources behouden moet blijven.
+- Ezelsbrug:
+  - **System-assigned = het systeem regelt hem voor deze resource.** Eén-op-één gekoppeld; resource weg betekent identiteit weg.
+  - **User-assigned = jij regelt en verdeelt hem.** Zelf aanmaken en koppelen; herbruikbaar en blijft bestaan als een gekoppelde resource verdwijnt.
+- Key Vault en on-premises:
+  - **Azure Key Vault draait niet on-premises**; het is een beheerde Azure-dienst.
+  - Een on-premises applicatie kan Azure Key Vault wel benaderen, eventueel privé via VPN/ExpressRoute, een VNet en Private Endpoint.
+  - **HashiCorp Vault** is een bekend alternatief dat je zelf on-premises, in Kubernetes of in de cloud kunt hosten.
+  - Andere alternatieven zijn onder meer CyberArk Secrets Manager/Conjur en Delinea Secret Server; de juiste keuze hangt af van integraties, beheer en compliance.
+- Monitoring:
+  - **Azure Monitor** is het overkoepelende platform voor metrics, logs, alerts en observability.
+  - **Application Insights** is de monitoringtool/APM binnen Azure Monitor voor applicaties: requests, prestaties, fouten, traces en afhankelijkheden.
+  - SQL-databaseaanroepen kunnen als dependency zichtbaar worden, inclusief duur en fouten. De Application Map toont de applicatie en gekoppelde componenten.
+  - Hierdoor kan een DevOps-team tijdens en na een uitrol de werking van de hele applicatieketen volgen.
+  - Nuance: Application Insights toont applicatieverkeer naar SQL; voor database-resourcegegevens en diepere SQL-monitoring gebruik je daarnaast Azure Monitor-diagnostiek en database-metrics/logs.
+- Drie deploymentpaden voor Azure Container Apps:
+  1. `az containerapp up`: snelste route; maakt of gebruikt benodigde resources en kan vanuit broncode, GitHub of een bestaand image deployen. Vooral handig voor een snelle start en standaardinstellingen.
+  2. `az containerapp create`: expliciete CLI-deployment waarbij je de opties zelf meegeeft; geeft meer controle.
+  3. YAML: declaratieve configuratie in een bestand, uitgevoerd met `az containerapp create --yaml <bestand.yml>`; geschikt voor herhaalbare deployments en versiebeheer.
+- Tuning voor AI-services in Container Apps:
+  - Geef langzaam ladende modellen voldoende starttijd met `initialDelaySeconds`, `periodSeconds` en een passende `failureThreshold`; voorkom dat liveness tijdens modelwarmup al herstarts veroorzaakt.
+  - Probe-endpoints moeten klein en snel zijn. Laat liveness niet afhangen van SQL, Redis of externe API's, anders kan een externe storing gezonde replicas in een restart-loop brengen.
+  - CPU en geheugen worden per container ingesteld en gelden in iedere replica. CPU throttling vraagt meestal meer CPU of optimalisatie; OOM-restarts vragen meer geheugen of onderzoek naar een geheugenlek.
+  - Denk bij kosten aan resources per replica × aantal replicas × draaitijd. Los eerst de bottleneck per replica op en stel daarna autoscaling af.
+  - Vaste beheerregel: houd zowel de Azure-roadmap als het werkelijke performancegebruik in de gaten. Meet CPU, geheugen, latency, foutpercentage, restarts, replica-aantallen en kosten voordat je resources, tiers of schaalregels aanpast.
+  - **KEDA = Kubernetes Event-driven Autoscaling.** KEDA meet een eventbron, bijvoorbeeld het aantal Service Bus-berichten, Event Hubs-lag of Kafka-lag, en laat Container Apps het aantal replicas automatisch aanpassen.
+  - KEDA kan een event-driven worker van nul naar meerdere replicas schalen en na verwerking weer terug naar nul. KEDA verwerkt de berichten niet zelf; het levert alleen het schaalsignaal.
+  - Microsoft heeft geen aparte KEDA-variant: Azure Container Apps gebruikt het open-source KEDA onder water als beheerde functie. Je configureert alleen een scale rule; Microsoft beheert installatie en lifecycle. In AKS is KEDA beschikbaar als managed add-on.
+  - Belangrijke Azure KEDA-scalers:
+    - **Service Bus:** schaal op het aantal wachtende berichten in een queue of topic/subscription.
+    - **Event Hubs:** schaal op consumer lag/achterstand per consumer group.
+    - **Storage Queue:** schaal op het geschatte aantal queueberichten.
+    - **Blob Storage:** schaal op nieuwe of nog te verwerken blobs.
+  - Gebruik waar mogelijk managed identity om de scaler toegang tot de eventbron te geven.
+- **Azure Queue Storage** is een queue-service binnen een Storage Account. Het laat applicatiecomponenten asynchroon communiceren en werk bufferen.
+- Zie Queue Storage als de lichtere, eenvoudige variant van Service Bus: goedkoop en geschikt voor grote eenvoudige work queues.
+- Kies **Service Bus** wanneer je geavanceerde messaging nodig hebt, zoals topics/subscriptions, sessions/FIFO, transactions, duplicate detection of automatische dead-lettering.
+- Queue Storage levert berichten *at least once* en garandeert geen strikte volgorde; consumers moeten daarom dubbele verwerking veilig kunnen afhandelen.
+- Kostenregel: als de eenvoudige functies van Queue Storage voldoende zijn, is dat doorgaans goedkoper dan Service Bus. Kies Service Bus pas wanneer de extra messagingfuncties nodig zijn; controleer voor een echte oplossing ook volume, transacties en beheerkosten.
+- Voorbeeld: bij kritieke bank- of betalingstransacties kan Service Bus gerechtvaardigd zijn voor betrouwbare overdracht naar een back-end of mainframe, vanwege sessions/FIFO, transactions, duplicate detection, retries en dead-lettering.
+- Nuance: Service Bus verwerkt de geldtransactie niet zelf; het banksysteem doet dat. De applicatie moet daarnaast idempotent zijn en dubbele boekingen voorkomen.
+- Keuzeregel: gebruik de eenvoudigste queue die aan de eisen voldoet. Niet ieder bericht vereist de extra functies en kosten van Service Bus.
+- **ADLS = Azure Data Lake Storage.** Tegenwoordig bedoelt men meestal ADLS Gen2: Blob Storage met *hierarchical namespace*.
+- Hiermee organiseer je grote hoeveelheden ruwe en verwerkte data in echte mappen/bestanden en gebruik je fijnmazige ACL-rechten.
+- Typische toepassing: data lake voor analytics, machine learning en AI met bijvoorbeeld JSON-, CSV-, Parquet-, log-, beeld- en audiobestanden.
+- Ezelsbrug: **Blob Storage bewaart objecten; ADLS Gen2 maakt Blob Storage geschikter als bestandshiërarchie voor data-analyse.**
+- **Data lake:** centrale opslag waarin je grote hoeveelheden ruwe, half-gestructureerde en gestructureerde data in het oorspronkelijke formaat bewaart, bijvoorbeeld logs, JSON, CSV, Parquet, afbeeldingen en audio.
+- De structuur en betekenis worden vaak pas toegepast wanneer de data wordt gelezen en geanalyseerd: *schema-on-read*.
+- Verschil: een **data warehouse** bevat vooral vooraf opgeschoonde en gemodelleerde data voor vaste rapportages; een data lake bewaart data flexibeler voor later gebruik.
+- Ezelsbrug: **data lake = eerst bewaren, later bepalen hoe je het gebruikt.**
+- Deployment verifiëren bij Azure Container Apps: **Logs → Revisions → Replicas**.
+  - **Logs:** zoek eerst naar start-, image-, schaal- of applicatiefouten.
+  - **Revision:** een onveranderlijke versie/snapshot van de app; controleer status, health en of de juiste versie actief is.
+  - **Replica:** een draaiende instance van die revision; controleer welke replica faalt en bekijk daarbinnen de juiste container.
+- Hiërarchie: `Container App → Revision → Replica → Container`.
+- Logtypen:
+  - **Console logs:** uitvoer van de applicatie/container via stdout en stderr.
+  - **System logs:** platformgebeurtenissen, zoals image pulls, provisioning, starten en schalen.
+  - **Log stream:** live meekijken met console- of system logs; dit is een weergavemethode en geen apart logtype.
+- Region pairs bij calamiteiten/BCDR:
+  - Een **region pair** is een door Microsoft gekoppeld paar Azure-regio's, meestal binnen dezelfde geografie. Voorbeeld: West Europe ↔ North Europe.
+  - Een region pair bestaat altijd uit **twee regio's**. De onderlinge afstand kan groot zijn; Microsoft noemt doorgaans minimaal circa 300 mijl/483 km waar de geografie dit mogelijk maakt. Er is geen vaste maximale afstandsgarantie.
+  - Doel: herstel bij een grote regionale calamiteit ondersteunen, geplande platformupdates zoveel mogelijk na elkaar uitvoeren en meestal dezelfde dataresidentie-geografie behouden.
+  - Bij een grootschalige storing krijgt één regio per paar prioriteit bij herstel.
+  - **Geen automatische bescherming:** resources, datareplicatie en failover moet je per Azure-dienst zelf ontwerpen en configureren.
+  - **Availability Zone:** bescherming tegen uitval van een datacenter binnen één regio. **Region pair/multiregion:** bescherming tegen uitval van een hele regio.
+  - Niet iedere nieuwe Azure-regio heeft nog een vast paar; veel diensten kunnen ook naar zelfgekozen regio's repliceren.
+  - Bepaal vooraf **RTO** (hoe snel moet herstel plaatsvinden?) en **RPO** (hoeveel dataverlies is acceptabel?). Deze bepalen de DR-oplossing.
+- Nu in de les: **Azure Cosmos DB for NoSQL**.
+  - Volledig beheerde NoSQL-database voor JSON-documenten/items, met flexibel schema en horizontale schaal.
+  - Hiërarchie: `Cosmos DB-account → database → container → item`.
+  - Een **container** is vergelijkbaar met een tabel/collectie, maar bevat JSON-items die niet allemaal exact dezelfde velden hoeven te hebben.
+  - De **partition key** bepaalt hoe items logisch worden verdeeld. Een goede keuze verdeelt data en belasting gelijkmatig en past bij veelgebruikte queries.
+  - Bewerkingen kosten **Request Units (RU)**; ingestelde capaciteit wordt uitgedrukt in `RU/s`.
+  - Een point read met zowel `id` als partition key is doorgaans het efficiëntst. Cross-partition queries kosten meestal meer RU en tijd.
+- Azure Quickstart Templates: officiële GitHub-repository met community-samples voor ARM/Bicep. Op 5 oktober 2026 bevat de map `quickstarts` 1.275 template-ingangen.
+- Azure Blueprints bundelde ARM-templates, resourcegroepen, Azure Policy en RBAC voor herhaalbare governance en compliance.
+- Blueprints bevatte niet zelf de wetgeving; organisaties vertaalden wettelijke eisen naar policies, rollen en configuratie.
+- Voorbeeld AVG: beleid voor datalocatie, minimale toegang, encryptie, logging, bewaartermijnen en verwijdering technisch afdwingen en controleren.
+- Governance-tools ondersteunen AVG-naleving, maar maken een omgeving niet automatisch juridisch compliant.
+- Azure Blueprints wordt gefaseerd uitgefaseerd. Het is nog zichtbaar en bestaande onderdelen kunnen beperkt blijven werken, maar nieuwe definities/versies zijn sinds 31 juli 2026 geblokkeerd. Volledige beëindiging: 31 januari 2027.
+- Nieuwe aanpak: Template Specs + Deployment Stacks + Azure Policy + RBAC.
+
+### Azure Policy
+
+- Azure Policy controleert resources tegen vastgelegde regels voor governance en compliance.
+- Een policy definition beschrijft de voorwaarde en het effect, bijvoorbeeld `audit`, `deny`, `modify` of `deployIfNotExists`.
+- Een assignment koppelt de policy aan een scope, zoals management group, subscription of resource group.
+- Een initiative groepeert meerdere policies tot één compliancepakket.
+- Azure-scopehiërarchie: tenant root group → management groups → subscriptions → resource groups → resources.
+- Subscriptions hangen onder de tenant root management group of onder een aangemaakte child management group.
+- Management groups kunnen bijvoorbeeld per land, bedrijfsonderdeel, omgeving of complianceprofiel worden ingericht; het ontwerp verschilt per klant.
+- Maximumdiepte: tenant root plus zes management-groupniveaus. Subscriptions tellen niet mee in deze limiet.
+- OTAP = Ontwikkeling, Test, Acceptatie en Productie.
+- Deze omgevingen kunnen elk een eigen subscription krijgen voor isolatie van toegang, policies, kosten, quota en risico's.
+- Een policy of initiative kan ook rechtstreeks aan een subscription worden toegewezen en geldt dan voor de onderliggende resource groups en resources.
+- Binnen een subscription maak je resource groups om bij elkaar horende Azure-resources logisch te groeperen en gezamenlijk te beheren.
+- Governance erft top-down: assignments op management group of subscription werken door naar onderliggende scopes.
+- Vooral Azure Policy en RBAC erven automatisch; resourceconfiguraties en tags doen dat niet vanzelf.
+- Policy-assignments op een hoger niveau worden normaal geërfd door de onderliggende scopes.
+- Op management-groupniveau kan Cost Management de kosten van onderliggende subscriptions gezamenlijk tonen, mits dit voor het accounttype wordt ondersteund en je voldoende rechten hebt.
+- Een management group is een governance-scope; het billing account blijft de formele facturatiescope.
+- Belangrijke functies op management-groupniveau: 1) kosten over onderliggende subscriptions bekijken en 2) policies centraal toewijzen.
+- Meerdere policy definitions kunnen als één initiative worden gebundeld en gezamenlijk worden toegewezen.
+- Voorbeeld: de built-in policy **Allowed locations** kan deployments beperken tot `West Europe` en andere regio's weigeren.
+- Policies kunnen ongewenste open poorten, NSG-regels of publieke toegang controleren, weigeren of rapporteren.
+- NSG's en firewalls filteren het netwerkverkeer zelf; Azure Policy controleert of hun configuratie aan de regels voldoet.
+- Een organisatie kan met **Allowed resource types** of **Not allowed resource types** productkeuzes afdwingen.
+- Voorbeeld: alleen goedgekeurde Kubernetes/AKS-oplossingen toestaan en ongewenste Azure-platformdiensten blokkeren.
+- Policies kunnen ook toegestane SKU's, configuraties en deploymentmethoden beperken.
+- Dit geldt binnen de toegewezen Azure-scope; gebruik buiten Azure vraagt om aanvullende governance.
+
+### Data-, caching- en monitoringbegrippen
+
+- **Apache Kafka:** gedistribueerd platform voor continue eventstromen. Producers schrijven events naar **topics**; topics zijn verdeeld in **partitions** voor schaal en parallelle verwerking.
+- Consumers lezen met een **consumer group** en bewaren hun positie als **offset**. Lezen verwijdert het event niet; binnen de retentieperiode kan het opnieuw worden afgespeeld.
+- Kafka garandeert volgorde binnen één partition, niet automatisch over alle partitions heen.
+- **Azure Event Hubs** heeft een Kafka-compatibele endpoint, zodat veel Kafka-clients met aangepaste configuratie Event Hubs kunnen gebruiken.
+- **Azure Databricks:** beheerd data- en AI-analyseplatform in Azure, gebaseerd op onder meer Apache Spark. Het gebruikt notebooks, jobs en SQL voor ETL, analytics, streaming en machine learning.
+- **ADLS bewaart de data; Databricks verwerkt en analyseert de data.** Databricks is dus niet simpelweg de data lake-opslag.
+- **Delta Lake** voegt betrouwbare tabellen met ACID-transacties en schemahandhaving toe boven cloudopslag. **Unity Catalog** regelt centrale toegang, governance, auditing en lineage.
+- Ezelsbrug: **ADLS = magazijn; Databricks = fabriek en laboratorium.**
+- **Redis:** snelle in-memory datastore, vaak gebruikt als cache, session store en voor tijdelijke status. De actuele beheerde Azure-dienst is **Azure Managed Redis**.
+- Let op: Azure Cache for Redis wordt uitgefaseerd; Microsoft adviseert migratie naar Azure Managed Redis. Controleer actuele deadlines voordat je een ontwerp maakt.
+- **Cron:** tijdschema voor terugkerende taken. In Kubernetes start een **CronJob** volgens zo'n schema Jobs/pods, bijvoorbeeld iedere nacht een batchtaak. Cron is geen monitoringtool.
+- **Prometheus:** verzamelt numerieke tijdreeksmetrics door endpoints periodiek te scrapen. Veel gebruikt voor Kubernetes/AKS; Azure Monitor biedt hiervoor Managed Prometheus.
+- **PromQL:** querytaal om Prometheus-metrics te selecteren, combineren en aggregeren voor dashboards en alerts.
+- PromQL kan ook **businessmetrics** tonen, maar alleen als de applicatie die metrics publiceert, bijvoorbeeld `orders_total`, `payments_failed_total` of `checkout_value_euros_total`.
+- Voorbeeld ordertempo per minuut: `sum(rate(orders_total[5m])) * 60`.
+- Voorbeeld foutpercentage: `sum(rate(payments_failed_total[5m])) / sum(rate(payments_total[5m])) * 100`.
+- Houd labels beperkt tot vaste categorieën zoals `service`, `region` en `status`. Gebruik geen ordernummer of klant-ID als label; dat veroorzaakt te veel unieke time series en hogere kosten.
+
+### Resource allocation, performance en kosten
+
+- Stel per container/replica de benodigde **CPU en memory** in. Te laag geeft throttling, trage responses of OOM-restarts; te hoog betekent betaalde capaciteit die vaak ongebruikt blijft.
+- Kijk samen naar: CPU- en geheugengebruik, requestlatency, foutpercentage, queue-lengte, restarts, actieve replicas en replica-uren.
+- Kosten worden grofweg bepaald door **resources per replica × aantal actieve replicas × draaitijd**, plus onder meer requests, logging, netwerk en achterliggende diensten.
+- Controleer daarom ook `minReplicas`, `maxReplicas` en de KEDA-drempel. Een hoog minimum kost continu geld; een te lage of te late schaalgrens kan performanceproblemen geven.
+- Gebruik Azure Cost Management voor kosten en budgets, en Azure Monitor/Managed Prometheus met Grafana voor werkelijk resource- en applicatiegebruik. Koppel technische metrics waar nuttig aan businessmetrics, bijvoorbeeld kosten per 1.000 verwerkte orders.
+- Optimalisatieroutine: meet representatief verkeer → vind de bottleneck → pas CPU/memory of code aan → stel autoscaling af → controleer performance én kosten opnieuw.
+
+### Revisions en verkeersverdeling
+
+- Een **revision** in Azure Container Apps is een onveranderlijke snapshot/versie van de container-app.
+- **Single revision mode** is standaard: één revision is actief. De oude revision houdt 100% verkeer totdat de nieuwe revision gereed is en de startup- en readiness-probes zijn geslaagd; daarna schakelt Azure over.
+- **Multiple revision mode:** meerdere revisions kunnen tegelijk actief zijn. Je verdeelt het verkeer met percentages die samen 100% zijn, bijvoorbeeld oud 90% en nieuw 10%.
+- Gebruik multiple mode voor een canary release, blue-green deployment, gecontroleerde rollback of **A/B-test**. Voor een echte A/B-test moet je naast verkeer ook een meetbaar resultaat vastleggen, bijvoorbeeld conversie of foutpercentage.
+- Een **revision label** is een vaste, leesbare naam zoals `staging` of `green` met een eigen URL die rechtstreeks naar één revision wijst. Je kunt het label later naar een andere revision verplaatsen terwijl de label-URL gelijk blijft.
+- Labels en percentages werken los van elkaar: de normale app-URL volgt de traffic weights; de label-URL gaat rechtstreeks naar de gelabelde revision.
+- In Container Apps stel je dit in onder **Revision management** en de kolom **Traffic**. CLI-voorbeeld: `az containerapp ingress traffic set --name <app> --resource-group <rg> --label-weight stable=90 candidate=10`.
+- **App Service** gebruikt deployment slots in plaats van Container Apps-revisions. Onder **Deployment → Deployment slots** kun je in de kolom **Traffic %** een deel van het productieverkeer naar bijvoorbeeld de staging-slot sturen voor een gefaseerde test.
+- Dit ingebouwde slotverkeer heet traffic routing. **Azure Traffic Manager** is een aparte DNS-dienst voor routering tussen publieke endpoints, vaak over regio's heen; het zit niet in het App Service Plan en is niet nodig voor een eenvoudige verdeling tussen App Service-slots.
+
+### Lab 01 - ACR Tasks: examenfocus
+
+- **ACR** bewaart en beheert containerimages; **ACR Tasks** bouwt, test en onderhoudt images in Azure.
+- `az acr build` is een on-demand **quick task**: broncontext uploaden, image in Azure bouwen en bij succes naar ACR pushen. Lokale Docker is niet nodig.
+- `az acr task create` maakt een blijvende taskdefinitie die handmatig of via een commit-, base-image- of tijdtrigger kan draaien.
+- `az acr run --cmd ...` voert een containercommando als quick run in Azure uit; in het lab controleert dit of de Flask-app kan worden geïmporteerd.
+- Structuur: **registry → repository → image manifest → tag(s)**.
+- Een **tag** zoals `v1.0.0` is een leesbare, verplaatsbare verwijzing. Een **digest** zoals `sha256:...` identificeert exact dezelfde image-inhoud en is geschikt voor reproduceerbare deployments.
+- Versietags zoals `v1.0.0` en `v1.1.0` kunnen naast elkaar naar verschillende manifests verwijzen. Vermijd `latest` voor productie als exacte reproduceerbaarheid nodig is.
+- `az acr repository list` toont repositories; `show-tags` toont tags; `az acr manifest list-metadata` toont manifests en digests; `az acr task list-runs` toont buildhistorie en status.
+- Een productietag locken met `--write-enabled false` beschermt tegen onbedoeld bijwerken en volgens ACR-lockgedrag ook tegen normale verwijdering. Voor alleen verwijderbeveiliging bestaat `--delete-enabled false`.
+- Examenkeuze: cloudbuild zonder lokale Docker → **ACR Tasks / `az acr build`**; automatische herhaalbare build na Git- of base-imagewijziging → blijvende **ACR task met trigger**.
+- **AcrPull** is een ingebouwde Azure RBAC-rol met alleen data-plane leesrechten op ACR: images/artifacts pullen en bijbehorende repository- en taginformatie lezen. De rol kan geen images pushen en kan de registry niet beheren.
+- In lab 02 krijgt de system-assigned managed identity van de Web App `AcrPull` op de ACR-resource. App Service vraagt daarmee een Entra-token aan en haalt de private image op zonder opgeslagen registrywachtwoord.
+- Least privilege: ken `AcrPull` toe op de ACR-scope en geen brede rol zoals Contributor op de hele resource group.
+- Bij de klassieke modus **RBAC Registry Permissions** gebruik je `AcrPull`. Bij **RBAC Registry + ABAC Repository Permissions** gebruik je de ABAC-compatibele rol **Container Registry Repository Reader**, eventueel beperkt tot één repository.
+- Een nieuwe role assignment kan enkele minuten nodig hebben om door te werken; een directe 401/403 of image-pullfout kan daardoor tijdelijk zijn.
+
+## Dinsdag 6 oktober 2026
+
+### Persistente opslag in Kubernetes/AKS
+
+- Containers en pods zijn vervangbaar; hun lokale bestandssysteem is in beginsel tijdelijk. Gebruik een persistent volume als data een pod-restart of verplaatsing naar een andere node moet overleven.
+- Keten: **Pod → volumeMount → PVC → PV → echte Azure-opslag**.
+- **PV (PersistentVolume):** het daadwerkelijke storagevolume dat Kubernetes beheert; een cluster-resource.
+- **PVC (PersistentVolumeClaim):** de aanvraag van een workload voor opslag. De claim noemt onder meer grootte, `StorageClass` en access mode; een PVC is namespace-gebonden.
+- Een PV wordt exclusief aan één PVC gebonden: normaal een 1-op-1-binding. Meerdere pods kunnen diezelfde claim gebruiken als het opslagtype en de access mode dat toelaten.
+- **StorageClass:** opslagprofiel met de CSI-provisioner en eigenschappen zoals schijftype/prestatieniveau, `reclaimPolicy`, `volumeBindingMode` en of uitbreiding is toegestaan.
+- Bij **dynamic provisioning** maakt Kubernetes via de StorageClass automatisch een PV en de onderliggende Azure Disk of Azure Files-share aan zodra een passende PVC wordt aangevraagd.
+- Zonder opgegeven `storageClassName` gebruikt Kubernetes de default StorageClass, als die aanwezig is.
+- Access modes:
+  - **RWO – ReadWriteOnce:** read/write gemount door één **node** tegelijk. Meerdere pods op diezelfde node kunnen de claim technisch nog delen; RWO betekent dus niet strikt één pod.
+  - **RWX – ReadWriteMany:** read/write door meerdere nodes tegelijk; geschikt voor gedeelde bestanden.
+  - **ROX – ReadOnlyMany:** read-only door meerdere nodes.
+  - **RWOP – ReadWriteOncePod:** read/write door precies één pod in het hele cluster; beschikbaar voor ondersteunde CSI-volumes.
+- In AKS: **Azure Disk** is normaal RWO en past bij snelle, node-gebonden block storage. **Azure Files** ondersteunt RWX via SMB/NFS en past bij gedeelde bestanden tussen meerdere nodes/pods.
+- `reclaimPolicy: Delete` verwijdert normaal het dynamisch gemaakte volume nadat de claim wordt vrijgegeven; `Retain` bewaart het volume voor handmatige terugwinning. Controleer dit om dataverlies te voorkomen.
+- `allowVolumeExpansion: true` maakt vergroten via de PVC mogelijk als de driver dit ondersteunt; volumes verkleinen wordt niet ondersteund.
+- Examenkeuze: één node, lage latency of databasevolume → vaak Azure Disk/RWO. Meerdere replicas op verschillende nodes moeten dezelfde bestanden schrijven → Azure Files/RWX.
+- StatefulSets gebruiken vaak `volumeClaimTemplates`, zodat iedere replica een eigen stabiele PVC krijgt.
+- Bronnen:
+  - https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+  - https://kubernetes.io/docs/concepts/storage/storage-classes/
+  - https://learn.microsoft.com/en-us/azure/aks/concepts-storage
+
+### Azure Storage-redundantie
+
+- Waarschijnlijk wordt met **2RS** eigenlijk **ZRS** bedoeld; `2RS` is geen standaard Azure Storage-redundantieoptie.
+- **LRS – Locally Redundant Storage:** drie synchrone kopieën binnen één fysiek datacenter in de primaire regio. Goedkoopst; beschermt tegen disk-, server- en rackuitval, maar niet tegen verlies van het hele datacenter.
+- **ZRS – Zone-Redundant Storage:** synchrone kopieën verdeeld over drie of meer availability zones binnen dezelfde regio. Beschermt tegen uitval van een volledig datacenter/zone; lage latency en geen tweede regio.
+- **GRS – Geo-Redundant Storage:** LRS in de primaire regio plus asynchrone replicatie naar een tweede, gekoppelde regio, waar opnieuw LRS wordt gebruikt. Beschermt de data tegen regionale uitval, maar vereist failover voordat de secundaire kopie normaal toegankelijk wordt.
+- **RA-GRS – Read-Access GRS:** GRS met daarnaast permanente read-only toegang tot het secundaire endpoint.
+- **GZRS – Geo-Zone-Redundant Storage:** ZRS in de primaire regio plus asynchrone geo-replicatie naar LRS in een tweede regio. Beschermt zowel tegen zone- als regio-uitval.
+- **RA-GZRS:** GZRS met read-only toegang tot de secundaire regio; hoogste beschikbaarheids-/duurzaamheidsoptie, maar doorgaans ook het duurst.
+- Geo-replicatie is asynchroon. Bij een plotselinge regionale ramp kan de laatste nog niet gerepliceerde data verloren gaan; redundantie betekent dus niet automatisch RPO = 0.
+- Redundantie kopieert ook fouten zoals overschrijven of verwijderen. Gebruik versiebeheer, soft delete en backups voor bescherming tegen menselijke fouten/ransomware.
+- Examenkeuze:
+  - laagste kosten en uitval van één datacenter acceptabel → **LRS**;
+  - datacenter/zone-uitval opvangen binnen dezelfde regio → **ZRS**;
+  - bescherming tegen hele regio-uitval → **GRS**;
+  - daarnaast lezen uit secundaire regio vóór failover → **RA-GRS**;
+  - zonebescherming én regiobescherming → **GZRS/RA-GZRS**.
+- Voor AKS gedeelde opslag via Azure Files is ZRS vaak logisch voor hoge beschikbaarheid binnen de regio. Ondersteuning en prijs verschillen per opslagdienst, tier en regio.
+- Bron: https://learn.microsoft.com/en-us/azure/storage/common/storage-redundancy
+
+### Block Blob, Append Blob en Page Blob
+
+- Azure Blob Storage is object storage voor ongestructureerde data. Hiërarchie: **storage account → blob container → blob**. Een blob container is een opslagmap/namespace en heeft niets te maken met een Docker-container.
+- **Block Blob:** opgebouwd uit afzonderlijke blokken die parallel kunnen worden geüpload en daarna als één blob worden vastgelegd. Beste algemene keuze voor documenten, afbeeldingen, video, backups, JSON/CSV/Parquet en data-lakebestanden.
+- Block blobs zijn geoptimaliseerd voor grote uploads, downloads en streaming, niet voor veel kleine wijzigingen midden in hetzelfde bestand. Maximumgrootte is momenteel ongeveer 190,7 TiB, afhankelijk van serviceversie en uploadmethode.
+- **Append Blob:** gebruikt ook blokken, maar nieuwe blokken kunnen alleen aan het **einde** worden toegevoegd. Geschikt voor append-only logging, auditregels en telemetry die chronologisch groeit.
+- Append Blob is geen message queue en geen goede keuze als bestaande inhoud willekeurig moet worden gewijzigd. Voor gelijktijdige writers zijn append-position conditions of andere coördinatie nodig om volgorde/conflicten te beheersen.
+- **Page Blob:** bestaat uit pagina's van 512 bytes en ondersteunt snelle random read/write van byte-ranges. Geschikt voor sparse bestanden, VHD's en disk-/databaseachtige workloads.
+- **VHD = Virtual Hard Disk:** bestand dat zich voor een virtuele machine gedraagt als een fysieke harde schijf. Het kan een besturingssysteem, partities, bestandssysteem en gewone bestanden bevatten.
+- Een VM leest en schrijft verspreid over de virtuele disk. Daarom past een VHD bij Page Blob met random read/write en niet bij Append Blob.
+- **VHDX:** uitgebreidere opvolger van VHD, geïntroduceerd met Windows Server 2012. Microsoft geeft de `X` geen formele losse betekenis; onthoud hem als de extended variant. VHDX ondersteunt onder meer maximaal 64 TB, 4-KB-sectoren, betere uitlijning, metadata en herstelbescherming bij stroomuitval. Klassieke VHD ondersteunt maximaal 2 TB.
+- Voor lokale Hyper-V heeft VHDX meestal de voorkeur. Voor Azure-upload gelden disk- en VM-eisen; controleer altijd de actuele doeldiskvereisten.
+- Bij Azure Managed Disks beheert Azure de onderliggende opslag; je beheert niet zelf het Page Blob-bestand of storage account.
+- Page blobs zijn de basis voor Azure IaaS-schijven en kunnen maximaal 8 TiB groot zijn. Ze ondersteunen alleen de Hot access tier.
+- Het blobtype wordt bij creatie gekozen en kan niet rechtstreeks worden gewijzigd; voor conversie kopieer je de data naar een nieuwe blob van het gewenste type.
+- Examenkeuze:
+  - normaal bestand/object of data lake → **Block Blob**;
+  - alleen regels achteraan toevoegen → **Append Blob**;
+  - willekeurige blokken/pagina's in een virtuele disk wijzigen → **Page Blob**.
+- Bronnen:
+  - https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blobs-introduction
+  - https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-pageblob-overview
+
+### Storage tiering
+
+- **Storage tiering** plaatst Block Blob-data in een access tier die past bij hoe vaak de data wordt gelezen. Koudere tiers verlagen opslagkosten maar verhogen lees-, transactie- en eventuele herstelkosten.
+- **Hot:** online, milliseconden; vaak gelezen/gewijzigd; hoogste opslagprijs en laagste toegangskosten.
+- **Cool:** online, milliseconden; weinig gebruikt; aanbevolen minimale bewaartijd 30 dagen.
+- **Cold:** online, milliseconden; zelden gebruikt maar direct beschikbaar; aanbevolen minimale bewaartijd 90 dagen.
+- **Archive:** offline en goedkoopste opslag; eerst **rehydrateren** naar een online tier voordat de inhoud leesbaar is. Dit kan uren duren; aanbevolen minimale bewaartijd 180 dagen.
+- **Smart tier** verplaatst data automatisch tussen Hot, Cool en Cold op basis van gebruikspatronen; Archive valt daar niet automatisch onder.
+- Met **Lifecycle Management** kun je regels maken, bijvoorbeeld: na 30 dagen naar Cool, na 90 dagen naar Cold, na 180 dagen naar Archive en na 7 jaar verwijderen.
+- Access tiering geldt voor **Block Blobs**, niet voor Append Blobs en Page Blobs.
+- Archive wordt alleen ondersteund bij LRS, GRS en RA-GRS, niet bij ZRS, GZRS of RA-GZRS.
+- Examenval: goedkoopste opslag is niet automatisch goedkoopste totaaloplossing. Houd rekening met leesfrequentie, retrieval, transacties, rehydrationtijd en early-deletionkosten.
+- Bron: https://learn.microsoft.com/en-us/azure/storage/blobs/access-tiers-overview
+
+### Data lake, snelle analyse en fraudedetectie
+
+- Een **data lake** is primair goedkope, schaalbare opslag voor grote hoeveelheden ruwe en verwerkte data. Het is niet automatisch een database voor milliseconde-lookups.
+- Snelle analyse ontstaat door de combinatie van opslag en compute/querytechniek: Parquet/Delta, goede partitionering, grotere bestanden, metadata/indexen, caching en engines zoals Databricks/Spark, Synapse, Fabric of Azure Data Explorer.
+- **Parquet** is kolomgeoriënteerd: een query hoeft alleen relevante kolommen en datablokken te lezen. **Partition pruning** slaat mappen/partities over die niet aan het filter voldoen.
+- Veel kleine bestanden veroorzaken listing- en metadata-overhead; compaction naar grotere bestanden verbetert doorgaans analytics-performance en verlaagt transactiekosten.
+- Voor zeer snelle operationele lookups of transacties wordt data meestal vanuit het lake naar een geschikte serving-laag gebracht, bijvoorbeeld Cosmos DB, Redis, Azure Data Explorer, een zoekindex, relationele database of graph database.
+- Analysepatronen die vroeger vooral bij inlichtingen- en opsporingsdiensten voorkwamen zijn nu breed commercieel beschikbaar. Denk aan **entity resolution**, link-/netwerkanalyse, graph analytics, anomaliedetectie en patroonherkenning. Het is niet precies vast te stellen dat al deze technieken daar oorspronkelijk vandaan komen.
+- Voorbeeld witwasdetectie: combineer transacties, rekeningen, klanten, apparaten, IP-adressen en bedrijfsrelaties; koppel identiteiten; zoek circulaire geldstromen, snelle doorboekingen, ongebruikelijke bedragen, gedeelde apparaten en verborgen netwerken; geef risicosignalen aan menselijke onderzoekers.
+- Typische keten: **bronnen → ingestie/streaming → data lake → opschonen en entity resolution → graph/ML/rules → alerts/cases → menselijke beoordeling**.
+- Een model of regel levert een risicosignaal, geen bewijs. Privacy, toegangsbeheer, lineage, uitlegbaarheid, bias/false positives en menselijke controle zijn essentieel.
+- Examenpunt: scheid **storage** van **compute**. ADLS bewaart; een analytics- of database-engine verwerkt, indexeert en serveert de data.
+- Bronnen:
+  - https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-best-practices
+  - https://learn.microsoft.com/en-us/azure/data-explorer/external-azure-storage-tables-query
+
+### ADLS, HDFS, NTFS en POSIX
+
+- **ADLS Gen2** is geen afzonderlijk opslagsysteem: het zijn data-lakefuncties boven Azure Blob Storage, geactiveerd met **Hierarchical Namespace (HNS)**.
+- HNS geeft echte directory- en bestandshiërarchie. Een map hernoemen of verwijderen wordt een efficiënte, atomische metadataoperatie in plaats van alle blobs met hetzelfde padprefix één voor één te verwerken.
+- **HDFS – Hadoop Distributed File System:** gedistribueerd bestandssysteem voor big-data-clusters. De NameNode beheert metadata en paden; DataNodes bewaren gerepliceerde datablokken en leveren de werkelijke I/O.
+- ADLS is **Hadoop-compatible**, maar is geen HDFS-cluster. Hadoop/Spark gebruikt de **ABFS-driver** om ADLS via de `dfs.core.windows.net` REST-interface te benaderen.
+- Veilige URI-vorm: `abfss://<container>@<account>.dfs.core.windows.net/<pad>/<bestand>`; `abfss` gebruikt TLS.
+- **NTFS – New Technology File System:** lokaal Windows-bestandssysteem voor disks/volumes, met Windows-eigenschappen en ACL's. NTFS is niet ontworpen als cloudobjectopslag of Hadoop-distributed filesystem.
+- **POSIX – Portable Operating System Interface:** verzameling Unix-achtige standaarden voor onder meer bestandsoperaties en permissies. Relevante rechten zijn `r` (read), `w` (write) en `x` (execute/traverse).
+- ADLS ondersteunt **POSIX-achtige ACL's** op directories en bestanden voor Entra-gebruikers, groepen, service principals en managed identities. Het ondersteunt daarnaast Azure RBAC.
+- Azure RBAC geeft doorgaans bredere toegang op subscription/resource group/storage account/container; ACL's regelen fijnmazige toegang tot specifieke paden. Een toepasselijke RBAC-data-rol kan ACL-controle overstijgen, dus ontwerp beide samen.
+- Bij directories betekent `x` dat een identiteit het pad mag doorlopen. Zonder execute-permissie op een bovenliggende directory is een onderliggend bestand niet bereikbaar, ook als het bestand zelf leesrechten heeft.
+- **Access ACL** geldt voor het bestaande item. **Default ACL** op een directory wordt als uitgangspunt geërfd door nieuwe onderliggende bestanden en mappen; bestaande kinderen veranderen niet automatisch.
+- Examen-ezelsbrug: **Blob + HNS + ACL's + ABFS = ADLS Gen2**.
+- Bronnen:
+  - https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-introduction
+  - https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-abfs-driver
+  - https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-access-control
+
+### Cosmos DB: wereldwijde regio's
+
+- Bij **provisioned throughput** heeft Cosmos DB geen vaste limiet op het aantal regio's: je kunt alle ondersteunde Azure-regio's toevoegen.
+- Het is dus praktisch niet letterlijk eindeloos, maar wel: **zoveel als er geschikte Azure-regio's beschikbaar zijn**.
+- Uitzondering: een **serverless** Cosmos DB-account ondersteunt maar **één regio**.
+- Iedere extra regio krijgt een volledige kopie van de data en kan lokale reads afhandelen.
+- **Single-region write:** één schrijfregio; andere regio's zijn leesregio's en kunnen bij failover worden ingezet.
+- **Multi-region writes:** iedere ingestelde regio kan schrijven; sneller voor wereldwijde apps, maar duurder en conflict resolution wordt belangrijk.
+- Kostenwaarschuwing: bij provisioned throughput geldt grofweg `ingestelde RU/s × aantal regio's`; opslag wordt eveneens per regio gerepliceerd.
+- Met `PreferredRegions`/`PreferredLocations` laat je de SDK de dichtstbijzijnde beschikbare regio gebruiken.
+
+**Examenvalkuil:** “Cosmos DB ondersteunt maar één regio” is alleen waar voor **serverless**. Bij provisioned throughput is wereldwijde distributie juist een kernfunctie.
+
+### Cosmos DB-smaken (API's)
+
+De API bepaalt welk datamodel, welke drivers en welke querytaal je gebruikt:
+
+| API | Model / taal | Wanneer kiezen? |
+|---|---|---|
+| **Cosmos DB for NoSQL** | JSON-documenten, Cosmos SQL | Standaard voor nieuwe Cosmos DB- en AI/RAG-apps; snelste toegang tot nieuwe Cosmos-functies. |
+| **Cosmos DB for MongoDB** | Documenten, BSON, MongoDB-drivers | Bestaande MongoDB-app migreren of MongoDB-tools blijven gebruiken. |
+| **Cosmos DB for Apache Cassandra** | Wide-column, CQL | Bestaande Cassandra-workload migreren. |
+| **Cosmos DB for Apache Gremlin** | Graph: vertices en edges, Gremlin | Relaties en paden onderzoeken, zoals sociale netwerken of fraudeverbanden. |
+| **Cosmos DB for Table** | Key-value/tabellen, Table API | Eenvoudige en snelle lookups met `PartitionKey` en `RowKey`; compatibel met Azure Table Storage. |
+
+- **Examentip:** voor een nieuwe AI/RAG-oplossing zonder bestaande database-eis is **API for NoSQL** meestal het beste antwoord.
+- Kies een compatibiliteits-API vooral als bestaande code, drivers of een bestaand datamodel dat vereisen.
+- **Azure Cosmos DB for PostgreSQL** kan nog in ouder materiaal staan, maar zit op een retirementpad en wordt niet aanbevolen voor nieuwe projecten.
+
+### Capaciteitseenheden: DTU, RU en SU
+
+| Eenheid | Azure-dienst | Betekenis | Gebruik en kosten |
+|---|---|---|---|
+| **DTU** | Azure SQL Database | **Database Transaction Unit** | Bundel van CPU, geheugen, reads en writes. Je kiest een DTU-tier en betaalt voor die gereserveerde capaciteit. |
+| **RU** | Azure Cosmos DB | **Request Unit** | Meet het werk van databaseacties. Een point read van een item van circa 1 KB kost ongeveer 1 RU; grotere documenten, writes en complexe queries kosten meer. |
+| **SU** | Azure Stream Analytics | **Streaming Unit** | Rekencapaciteit voor een streaming job: CPU en geheugen voor het verwerken van continue eventstromen. Meer SUs geven meer capaciteit en hogere kosten. |
+
+**RU-kostenmodellen:**
+- **Provisioned throughput:** een vast aantal `RU/s`; betaling voor de ingestelde capaciteit, ook wanneer je die niet volledig gebruikt.
+- **Autoscale:** Azure schaalt RU/s automatisch tot het ingestelde maximum.
+- **Serverless:** betaling voor werkelijk verbruikte RUs en opslag; geschikt voor onregelmatige of lage belasting.
+- Bij onvoldoende RU/s krijg je throttling: HTTP-status **429 Too Many Requests**. De SDK kan opnieuw proberen.
+
+**SU-signalen:**
+- Monitor `SU % Utilization`, input backlog en watermark delay.
+- Rond of boven **80% SU-gebruik**: onderzoek de query/partitionering of schaal op.
+- **SU V2** is de aanbevolen structuur; SU V1 wordt uitgefaseerd.
+- Extra SUs helpen alleen goed als de input en query parallel verwerkt kunnen worden, bijvoorbeeld met partities en `PARTITION BY`.
+
+**Ezelsbrug:** **D**TU = SQL-**D**atabase, **R**U = database-**R**equests, **S**U = **S**treamverwerking.
+
+### Andere Azure-capaciteitseenheden
+
+| Eenheid | Dienst | Wat schaalt ermee? |
+|---|---|---|
+| **vCore** | Azure SQL/PostgreSQL e.a. | Expliciet aantal virtuele CPU-cores; transparanter dan het gebundelde DTU-model. |
+| **TU** | Event Hubs Standard | **Throughput Unit** voor ingress en egress. Eén TU: maximaal circa 1 MB/s of 1.000 events/s ingress en 2 MB/s egress. |
+| **PU** | Event Hubs Premium | **Processing Unit** met geïsoleerde CPU- en geheugenresources. |
+| **CU** | Event Hubs Dedicated | **Capacity Unit** voor capaciteit van een dedicated cluster. |
+| **SU** | Azure AI Search | Hier betekent SU **Search Unit**, dus iets anders dan Streaming Unit. `Search Units = replicas × partitions`. |
+| **DWU** | Synapse dedicated SQL pool | **Data Warehouse Unit**: gebundelde compute-, geheugen- en I/O-capaciteit. |
+
+**Azure AI Search-examentip:**
+- **Replicas** verhogen querycapaciteit en beschikbaarheid.
+- **Partitions** verhogen opslag en indexeringscapaciteit.
+- Voorbeeld: 3 replicas × 2 partitions = **6 Search Units** en dus meer kosten.
+
+**Let op de context:** `SU` kan **Streaming Unit** in Stream Analytics of **Search Unit** in Azure AI Search betekenen.
+
+### Cosmos DB-scripts en bestandsextensie
+
+Bij **Cosmos DB for NoSQL** zijn er drie soorten server-side scripts:
+
+| Script | Functie |
+|---|---|
+| **Stored procedure** | Voert meerdere databasehandelingen transactioneel uit. |
+| **Trigger** | Draait vóór of na een opgegeven schrijfhandeling: pre-trigger of post-trigger. |
+| **UDF** | User-defined function voor eigen berekeningen binnen een query. |
+
+- Deze scripts worden geschreven in **JavaScript**; lokaal gebruik je normaal de extensie **`.js`**.
+- De documenten/data in Cosmos DB zijn **JSON** en kunnen lokaal als **`.json`** worden opgeslagen. **JSON bevat data; JavaScript bevat uitvoerbare logica.**
+- Ook een ARM-template kan een `.json`-bestand zijn, maar dat beschrijft infrastructuur en is geen Cosmos DB server-side script.
+- In Cosmos DB wordt het script geregistreerd met een **ID en JavaScript-body**. De portal vereist daardoor niet letterlijk een bestandsnaam of extensie.
+- Stored procedures en triggers zijn transactioneel, maar altijd begrensd tot **één logische partitie**. Bij uitvoering moet je de partition key meegeven.
+- Cosmos DB-triggers starten niet vanzelf: de applicatie moet bij de databaseoperatie aangeven welke trigger moet worden uitgevoerd.
+- Een UDF gebruik je alleen binnen een query, bijvoorbeeld `udf.BerekenWaarde(c.prijs)`.
+- Server-side scripts verbruiken **RUs** en ondersteunen geen imports van externe JavaScript-modules.
+
+**Kort antwoord:** bestand op schijf = meestal `.js`; in Cosmos DB = geregistreerd scriptobject.
+
+### Single-partition en cross-partition
+
+- Een **logische partitie** bevat alle items met dezelfde partition-keywaarde.
+- **Single-partition query:** bevat een exacte gelijkheidsfilter op de partition key. Cosmos DB weet direct waar de data staat; meestal sneller, goedkoper en voorspelbaarder.
+- **Cross-partition query:** bevat geen exacte partition-keywaarde en wordt over meerdere of alle fysieke partities uitgevoerd (**fan-out**); meestal meer latency en meer RU-verbruik.
+
+Voorbeeld met `/customerId` als partition key:
+
+```sql
+-- Single partition
+SELECT * FROM c WHERE c.customerId = "C100"
+
+-- Cross partition
+SELECT * FROM c WHERE c.status = "Open"
+```
+
+- Een range-filter zoals `c.customerId > "C100"` is ook cross-partition.
+- Een **point read** met zowel `id` als partition key is doorgaans de goedkoopste en snelste leesactie.
+- Stored procedures en triggers kunnen alleen transactioneel werken binnen **één logische partitie**; geen cross-partition transactie.
+- Cross-partition queries zijn toegestaan en soms onvermijdelijk, maar worden bij grote containers duurder doordat iedere betrokken partitie haar eigen index doorzoekt.
+- Kies daarom een partition key die data en verkeer gelijkmatig verdeelt én aansluit op veelgebruikte queryfilters. Vermijd een **hot partition**.
+- Limiet per logische partitie: normaal maximaal **20 GB** en maximaal **10.000 RU/s**. Hierarchical partition keys kunnen helpen bij grotere tenant- of klantworkloads.
+
+**Examenregel:** staat de partition key met een exacte waarde in de query, denk aan **single partition**. Ontbreekt die, denk aan **cross partition, fan-out en extra RUs**.
+
+### Embeddings opslaan en ophalen met Cosmos DB
+
+Een **embedding** is een array met getallen die de betekenis van tekst, een afbeelding of andere content weergeeft. Teksten met ongeveer dezelfde betekenis krijgen vectoren die dicht bij elkaar liggen.
+
+**Ingestie, eenmalig of bij gewijzigde content:**
+1. Splits een document in kleinere **chunks**.
+2. Stuur iedere chunk naar een embeddingmodel, bijvoorbeeld Azure OpenAI.
+3. Het model retourneert een vector met een vast aantal dimensies.
+4. Sla in hetzelfde Cosmos DB-document de chunk, metadata en vector op.
+5. Cosmos DB neemt de vector op in de ingestelde vectorindex.
+
+Voorbeeld:
+
+```json
+{
+  "id": "chunk-42",
+  "documentId": "handleiding-1",
+  "tenantId": "klant-a",
+  "content": "Een managed identity voorkomt opgeslagen wachtwoorden.",
+  "embedding": [0.014, -0.223, 0.781]
+}
+```
+
+**Retrieval bij iedere gebruikersvraag:**
+1. Maak met **hetzelfde embeddingmodel** een embedding van de gebruikersvraag.
+2. Zoek met `VectorDistance` naar de dichtstbijzijnde documentvectoren.
+3. Beperk de resultaten met `TOP N` en eventueel metadatafilters, zoals tenant, taal of product.
+4. Haal de oorspronkelijke tekst van de beste chunks op.
+5. Voeg deze chunks als context toe aan de prompt voor het taalmodel.
+6. Het taalmodel genereert een antwoord op basis van de opgehaalde context. Dit is **RAG**.
+
+```sql
+SELECT TOP 5
+    c.content,
+    c.documentId,
+    VectorDistance(c.embedding, @queryVector) AS score
+FROM c
+WHERE c.tenantId = @tenantId
+ORDER BY VectorDistance(c.embedding, @queryVector)
+```
+
+**Belangrijke instellingen:**
+- De documentvector en queryvector moeten afkomstig zijn van hetzelfde model en exact hetzelfde aantal **dimensions** hebben.
+- De **vector embedding policy** beschrijft onder andere path, datatype, dimensions en distance function.
+- De **vector indexing policy** bepaalt het indextype.
+- `cosine` is gebruikelijk voor tekst; daarnaast bestaan `dot product` en `euclidean`.
+
+**Vectorindextypen:**
+- `flat`: exacte brute-force zoekactie; 100% recall, maximaal 505 dimensies, vooral voor kleine datasets.
+- `quantizedFlat`: gecomprimeerde vectoren; lager RU-verbruik en sneller, met mogelijk klein nauwkeurigheidsverlies; maximaal 4.096 dimensies.
+- `DiskANN`: approximate nearest-neighbor index voor grote datasets; lage latency en RU-kosten met hoge, maar niet gegarandeerd 100%, recall; maximaal 4.096 dimensies.
+- Bij minder dan 1.000 vectoren gebruiken `quantizedFlat` en `DiskANN` nog een full scan.
+
+**Performance en examenpunten:**
+- Gebruik altijd `TOP N`; zonder limiet stijgen latency en RU-verbruik.
+- Zonder geschikte vectorindex volgt een full scan, wat duurder is.
+- Een metadatafilter op de partition key kan vector retrieval tot relevante partities beperken.
+- Vector search zoekt op **betekenis**; full-text search zoekt vooral op **woorden**. Hybrid search combineert beide.
+- Retrieval haalt relevante broninformatie op; het embeddingmodel formuleert zelf geen antwoord.
+- Bij RAG wordt de gevonden tekst als grounding/context naar het generatieve model gestuurd om hallucinaties te verminderen.
+
+### Metadata filtering, ranking en RRF
+
+**Metadata filtering** beperkt welke documenten kandidaat mogen zijn voordat de beste resultaten worden gekozen. Voorbeelden zijn:
+- `tenantId`: voorkom dat informatie van een andere klant wordt opgehaald.
+- taal, product, categorie, documenttype, autorisatiegroep of datum.
+- Een filter op de partition key kan tegelijk de beveiliging, snelheid en RU-efficiëntie verbeteren.
+
+```sql
+WHERE c.tenantId = @tenantId AND c.language = "nl"
+```
+
+**Ranking** sorteert de toegestane kandidaten op relevantie:
+- **Vector ranking:** `VectorDistance` rangschikt op semantische betekenis.
+- **Keyword ranking:** `FullTextScore` gebruikt **BM25** en kijkt onder andere naar woordfrequentie, zeldzaamheid van termen en documentlengte.
+- **Hybrid ranking:** gebruikt beide signalen tegelijk.
+
+**RRF = Reciprocal Rank Fusion**:
+- Vector search en full-text search leveren elk een eigen ranglijst.
+- De ruwe scores zijn niet goed rechtstreeks vergelijkbaar.
+- RRF kijkt daarom vooral naar de **positie/rank** van een document in iedere lijst en voegt die ranglijsten samen.
+- Een document dat in beide lijsten hoog staat, komt doorgaans bovenaan de gezamenlijke lijst.
+- Met gewichten kun je één signaal zwaarder laten meetellen, bijvoorbeeld `[2,1]` voor vector search tweemaal zo belangrijk als keyword search.
+
+```sql
+SELECT TOP 10 *
+FROM c
+WHERE c.tenantId = @tenantId
+ORDER BY RANK RRF(
+    VectorDistance(c.embedding, @queryVector),
+    FullTextScore(c.content, @term1, @term2)
+)
+```
+
+**Voorwaarden:** hybrid search vereist zowel een vector policy/index als een full-text policy/index. `RRF` wordt gebruikt in `ORDER BY RANK` en niet als gewone kolom in `SELECT`.
+
+**Examenregel:**
+- Exacte beperking of beveiliging → **metadata filter**.
+- Betekenis → **vector search**.
+- Exacte termen → **full-text/BM25**.
+- Beide ranglijsten combineren → **hybrid search met RRF**.
+
+### Azure Functions
+
+**Azure Functions** is Microsofts event-driven serverless compute-dienst en is grofweg de Azure-tegenhanger van **AWS Lambda**. Je schrijft een kleine functie; Azure verzorgt de runtime, infrastructuur en schaalvergroting.
+
+Een functie wordt uitgevoerd wanneer een **trigger** afgaat:
+- HTTP-request: kleine API of webhook.
+- Timer: periodieke taak, vergelijkbaar met cron.
+- Service Bus- of Storage Queue-bericht: bericht verwerken.
+- Event Hubs-event: datastroom verwerken.
+- Blob-trigger: reageren op een nieuw of gewijzigd bestand.
+- Cosmos DB change feed: reageren op gewijzigde documenten.
+
+**Trigger en bindings:**
+- Iedere functie heeft precies één **trigger**: waardoor de functie start.
+- **Input bindings** lezen gegevens zonder veel verbindingscode.
+- **Output bindings** schrijven resultaten naar bijvoorbeeld Storage, Service Bus of Cosmos DB.
+
+```text
+Queuebericht → trigger → function-code → output binding → Cosmos DB
+```
+
+- Functies zijn standaard het prettigst als **stateless** en kortdurend werk.
+- Een trigger kan een bericht opnieuw aanbieden na een fout. Ontwerp verwerking daarom **idempotent**: dezelfde uitvoering tweemaal mag geen ongewenst dubbel resultaat veroorzaken.
+- Voor stateful workflows, retries, wachttijden en meerdere stappen gebruik je **Durable Functions**.
+- Meerdere functies worden samen gedeployed in een **Function App** en delen configuratie en hostingresources.
+- Gebruik bij toegang tot Azure-diensten bij voorkeur een **managed identity** met minimale RBAC-rechten; bewaar geen secrets in code.
+
+**Hosting:**
+- **Flex Consumption:** aanbevolen serverless optie voor nieuwe apps; event-driven schalen en betalen naar gebruik.
+- **Premium:** prewarmed/always-ready instances, minder cold starts, meer capaciteit en netwerkopties.
+- **Dedicated:** draait in een App Service Plan; betalen voor de gereserveerde instances.
+- **Container Apps:** Functions-runtime in containers naast andere containerworkloads.
+- Schalen naar nul bespaart kosten, maar kan een **cold start** bij de volgende aanvraag veroorzaken.
+
+**AI-200-toepassingen:** een MCP-tool aanbieden, documenten verwerken, een queue consumer bouwen, AI- of databaseacties orkestreren en op events reageren.
+
+#### Waar draait Azure Functions onder water op?
+
+De meeste Azure Functions-hosting gebruikt onderliggend de **Azure App Service-infrastructuur** op door Microsoft beheerde Windows- of Linux-VM's.
+
+```text
+Azure VM / App Service-infrastructuur
+└── Azure Functions host/runtime
+    └── Language worker: Python, Node.js, Java, .NET, PowerShell, enz.
+        └── Eigen function-code
+```
+
+- De **Functions host** ontvangt triggers, regelt bindings, retries, logging en aanroepen van de functie.
+- Een **language worker** voert de code uit in de gekozen runtime. Bij moderne .NET Functions wordt het isolated worker-model aanbevolen.
+- Bij **Flex Consumption** kiest, start en schaalt Azure de workers automatisch; ze kunnen bij geen gebruik naar nul schalen.
+- Bij **Premium** houdt Azure minimaal warme compute beschikbaar om cold starts te beperken.
+- Bij **Dedicated** draaien Functions op VM-capaciteit van het gekozen App Service Plan.
+- Bij hosting op **Azure Container Apps** draait de Functions-runtime in een Linux-container en schaalt Container Apps de replicas.
+
+Je beheert normaal geen VM of besturingssysteem. **Serverless betekent dat de servers voor jou verborgen en beheerd zijn, niet dat er geen servers bestaan.**
+
+### Azure Architecture Center
+
+Het **Azure Architecture Center** is een handige Microsoft-bron voor het ontwerpen van Azure-oplossingen op veel verschillende gebieden:
+- Reference architectures en duidelijke architectuurdiagrammen.
+- Praktijkvoorbeelden en solution ideas.
+- Vergelijkingen en decision guides voor compute, containers, databases, storage, messaging, networking en AI.
+- Cloud design patterns met hun voordelen en trade-offs.
+- Service-specifieke best practices.
+- Ontwerpcontrole volgens de vijf pijlers van het **Well-Architected Framework**: reliability, security, cost optimization, operational excellence en performance efficiency.
+
+Gebruik bij het zoeken de productfilters, bijvoorbeeld Cosmos DB, Azure Functions, Container Apps, AKS of Azure AI Search. De voorbeelden zijn een goed startpunt, maar moeten altijd worden aangepast aan de eisen van de eigen workload.
+
+- Startpagina: https://learn.microsoft.com/en-us/azure/architecture/
+- Architecturen zoeken en op product filteren: https://learn.microsoft.com/en-us/azure/architecture/browse/
+- Technology decision guides: https://learn.microsoft.com/en-us/azure/architecture/guide/technology-choices/technology-choices-overview
+
+### Cosmos DB: range- en composite indexes
+
+Een index voorkomt dat Cosmos DB voor iedere query alle documenten volledig moet scannen. Nieuwe Cosmos DB for NoSQL-containers indexeren standaard alle properties en gebruiken voor strings en getallen een **range index**.
+
+#### Range index
+
+Een range index is vooral geschikt voor bewerkingen op **één property**:
+- gelijkheid: `=`, `IN`;
+- bereik: `>`, `<`, `>=`, `<=`, `!=`;
+- `ORDER BY` op één property.
+
+```sql
+SELECT * FROM c
+WHERE c.price >= 100
+ORDER BY c.price
+```
+
+#### Composite index
+
+Een composite index combineert twee of meer properties. Gebruik hem voor:
+- `ORDER BY` op meerdere properties;
+- meerdere filters, vooral equality plus range;
+- een filter op de ene property en sortering op een andere property;
+- soms `SUM`/`AVG` in combinatie met filters.
+
+```json
+"compositeIndexes": [
+  [
+    { "path": "/category", "order": "ascending" },
+    { "path": "/price", "order": "ascending" }
+  ]
+]
+```
+
+Deze index past goed bij:
+
+```sql
+SELECT * FROM c
+WHERE c.category = "Laptop" AND c.price > 500
+ORDER BY c.category, c.price
+```
+
+#### Volgorderegels
+
+- Zet **equality filters eerst** en een **range-filter als laatste**: `(category, price)` voor `category = ... AND price > ...`.
+- Bij `ORDER BY` op meerdere properties moeten propertyvolgorde en sorteerrichting overeenkomen met de composite index.
+- Een index `(category ASC, price ASC)` ondersteunt ook de volledig omgekeerde volgorde `(category DESC, price DESC)`.
+- Hij ondersteunt niet automatisch een gemengde richting zoals `(category ASC, price DESC)`.
+- Eén composite index kan maximaal één range-filter optimaal afhandelen. Voor twee range-filters kunnen twee composite indexes nuttig zijn.
+
+#### Filter plus sortering optimaliseren
+
+Deze query werkt met gewone range indexes, maar kan relatief veel RUs kosten:
+
+```sql
+SELECT * FROM c
+WHERE c.category = "Laptop"
+ORDER BY c.price
+```
+
+Om de composite index `(category, price)` te benutten, neem je de equality-property ook vooraan op in `ORDER BY`:
+
+```sql
+SELECT * FROM c
+WHERE c.category = "Laptop"
+ORDER BY c.category, c.price
+```
+
+#### Kostenafweging
+
+- Meer indexes kunnen reads versnellen en query-RUs verlagen.
+- Iedere write moet de indexes bijwerken; onnodige indexes verhogen write-RUs en indexopslag.
+- Sluit grote properties uit die nooit normaal worden doorzocht, zoals een embeddingpad dat al een aparte vectorindex heeft.
+- Gebruik query metrics/index utilization om te controleren of de verwachte index werkelijk wordt gebruikt.
+
+**Examenregel:** één veld → meestal range index. Meerdere sorteervelden of equality-filter plus range/sort → denk aan composite index en controleer de veldvolgorde.
+
+#### Vier belangrijke Cosmos DB-indextypen
+
+| Index | Waarvoor? | Voorbeeld |
+|---|---|---|
+| **Range** | Vergelijken, filteren en sorteren op één string- of getalproperty | `price >= 100`, `name = "Jan"`, `ORDER BY price` |
+| **Composite** | Meerdere properties samen optimaliseren | `category = "Laptop" AND price > 500`, of `ORDER BY category, price` |
+| **Spatial** | Locaties en vormen in GeoJSON doorzoeken | afstand, punt binnen gebied, intersectie van gebieden |
+| **Vector** | Embeddings vergelijken op semantische overeenkomst | `VectorDistance(c.embedding, @queryVector)` |
+
+**Ezelsbrug:**
+- **Range** = bereik op één veld.
+- **Composite** = combinatie van velden.
+- **Spatial** = plaats en geometrie.
+- **Vector** = betekenis en gelijkenis.
+
+Een spatial index werkt met GeoJSON zoals `Point`, `LineString`, `Polygon` en `MultiPolygon`. Een vector index gebruikt bijvoorbeeld `flat`, `quantizedFlat` of `DiskANN`. Daarnaast kent modern Cosmos DB ook gespecialiseerde **full-text indexes** voor keyword/BM25-search, maar de vier hierboven vormen de kern van dit lesonderdeel.
+
+### Internationale voertuigbewaking met streams
+
+Voorbeeld: een vrachtwagen in de Verenigde Staten stuurt continu positie, snelheid en tijd door. Wanneer hij buiten een geplande locatie te lang vrijwel stilstaat, moet de Europese meldkamer direct een waarschuwing ontvangen.
+
+```text
+Truck/sensor in VS
+→ IoT Hub of Event Hubs in VS
+→ Azure Stream Analytics
+→ tijdvenster + positie/snelheid per truck analyseren
+→ alleen afwijking als event doorsturen
+→ Service Bus/Event Hubs/Azure Function in EU
+→ melding, workflow of operationele database
+```
+
+- **IoT Hub** is geschikt voor beheerde communicatie met apparaten; **Event Hubs** voor grote hoeveelheden eventstreams.
+- **Azure Stream Analytics** verwerkt de telemetrie in near real time met SQL-achtige queries.
+- Verwerk per `truckId`/`deviceId`, zodat gebeurtenissen van hetzelfde voertuig samen worden beoordeeld en parallelisatie mogelijk blijft.
+- Gebruik een **sliding** of **hopping window** om steeds de laatste bijvoorbeeld 10–15 minuten te beoordelen.
+- Met `LAG` vergelijk je een meting met een eerdere meting van dezelfde truck.
+- Met `ST_DISTANCE` bereken je de verplaatsing tussen GeoJSON-posities of de afstand tot een locatie/geofence.
+- Een truck die weinig afstand aflegt gedurende het venster kan een alert-event opleveren. Dit is een expliciete businessregel; de ingebouwde functies `AnomalyDetection_SpikeAndDip` en `AnomalyDetection_ChangePoint` zijn meer bedoeld voor statistische tijdreeksafwijkingen.
+- Stuur alleen het relevante alarm naar Europa als alle ruwe telemetrie daar niet nodig is. Dat bespaart bandbreedte, opslag en verwerking.
+- **Event Hubs** is geschikt als de EU-kant opnieuw een hoge-volumestream verwerkt. **Service Bus** past beter bij een betrouwbare operationele opdracht of workflow. Een **Azure Function** kan de waarschuwing omzetten in een API-aanroep, ticket of notificatie.
+- Een output mag technisch naar een resource in een andere Azure-regio wijzen. Controleer daarbij latency, netwerk-/egresskosten, privacy, dataresidentie en toegangsbeheer.
+
+**Examenregel:** veel continue sensordata → Event Hubs/IoT Hub; realtime regels en tijdvensters → Stream Analytics; betrouwbare bedrijfsactie → Service Bus; uitvoerbare reactie → Azure Functions.
+
+### Praktische exameninformatie
+
+- Volgens de klassikale uitleg kan het examen worden ervaren als drie onderdelen: een case study, traditionele vragen en een probleem/oplossing-reeks met ja/nee-antwoorden. **Microsoft garandeert geen vaste indeling of vaste volgorde vooraf**; lees daarom altijd het introductiescherm van de echte examenzitting.
+- Het traditionele gedeelte kan antwoordopties zoals **A, B, C, D en soms E** bevatten, maar dit is niet één vast formaat. Mogelijke vraagtypen zijn onder andere multiple choice, selecteer meerdere antwoorden, drag-and-drop, build list, hot area en active screen.
+- Het ja/nee-gedeelte is een reeks probleem/oplossing-vragen. Na het beantwoorden kun je bij dit vraagtype **niet terug** om het antwoord te wijzigen.
+- Binnen een case study kun je de vragen nog bekijken en aanpassen zolang je die case/sectie niet verlaat. Na het verlaten kun je niet terug.
+- Het introductiescherm vermeldt hoeveel vragen, case studies en eventuele labs die specifieke examenzitting bevat. Gebruik dat direct voor je tijdsplanning.
+- Het officiële examen moet vooraf worden geboekt.
+- Het examen kan fysiek op een testlocatie worden afgelegd.
+- Genoemde Nederlandse plaatsen met testlocaties: **Amsterdam, Eindhoven en Utrecht**.
+- De daadwerkelijk beschikbare locaties en tijdstippen kunnen tijdens het boeken veranderen; controleer dit in het officiële boekingsportaal.
+- Eén examengedeelte is een **case study** met relatief veel tekst en is daardoor vaak het meest tijdrovend.
+- Het is prettig als de case study vroeg verschijnt, omdat je dan nog ruim tijd hebt; de volgorde heb je normaal niet zelf in de hand.
+
+**Aanpak case study:**
+1. **Beginnersfout:** alle casustekst woord voor woord lezen. Dit kost te veel tijd en veel tekst is niet relevant voor de huidige vraag.
+2. Scan de tabbladen eerst globaal, zoals **Overview**, **Existing environment/bestaande situatie**, **Requirements** en eventuele probleem- of technische secties.
+3. Onthoud alleen waar elk soort informatie staat; probeer nog niet alle details te leren.
+4. Ga na deze korte scan **meteen naar vraag 1** en lees de vraag en antwoordopties.
+5. Ga terug naar het relevante tabblad en zoek gericht naar requirements, bestaande situatie en beperkingen.
+6. Let extra op woorden als *must*, *minimize cost*, *lowest latency*, *managed*, *without changing code* en *least privilege*.
+7. Scheid harde eisen van achtergrondinformatie; niet ieder detail is nodig voor iedere vraag.
+8. Gebruik uitsluiting: verwijder antwoorden die één expliciete eis schenden.
+9. Bewaak de tijd en blijf niet vastzitten in één lange vraag.
+
+**Ezelsbrug:** eerst de kaart bekijken, dan de vraag lezen, daarna alleen het juiste stukje opzoeken.
+
+**Tijdsrisico:** de case study kan ook pas aan het einde verschijnen. Wie alle tijd aan eerdere vragen besteedt, kan daardoor in paniek raken of tijd tekortkomen.
+
+**Tijdsstrategie:**
+- Ga er vanaf de start vanuit dat er nog een case study kan volgen.
+- Reserveer bewust een tijdsbuffer voor het laatste examengedeelte.
+- Beantwoord gewone vragen vlot: markeer twijfelgevallen en ga door als terugkeren binnen dat gedeelte mogelijk is.
+- Zodra de case study verschijnt: kort de tabs scannen, meteen naar vraag 1 en alleen gericht lezen.
+- Houd enkele minuten over voor onverwachte vertraging; gebruik niet automatisch alle beschikbare tijd vóór het laatste gedeelte.
+
+**Aanpak ja/nee-vragen:** beoordeel uitsluitend of de voorgestelde oplossing **alle eisen** uit de vraag haalt. Eén geschonden harde eis betekent **nee**, ook als de oplossing technisch grotendeels werkt.
+
+Bronnen:
+- https://learn.microsoft.com/en-us/azure/cosmos-db/concepts-limits
+- https://learn.microsoft.com/en-us/azure/cosmos-db/optimize-cost-regions
+- https://learn.microsoft.com/en-us/azure/cosmos-db/tutorial-global-distribution
+- https://learn.microsoft.com/en-us/azure/cosmos-db/account-overview
+- https://learn.microsoft.com/en-us/azure/cosmos-db/postgresql/introduction/
+- https://learn.microsoft.com/en-us/azure/azure-sql/database/dtu-benchmark
+- https://learn.microsoft.com/en-us/azure/cosmos-db/request-units
+- https://learn.microsoft.com/en-us/azure/stream-analytics/stream-analytics-streaming-unit-consumption
+- https://learn.microsoft.com/en-us/azure/event-hubs/event-hubs-scalability
+- https://learn.microsoft.com/en-us/azure/search/search-capacity-planning
+- https://learn.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/what-is-a-data-warehouse-unit-dwu-cdwu
+- https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-write-stored-procedures-triggers-udfs
+- https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-query-container
+- https://learn.microsoft.com/en-us/azure/cosmos-db/partitioning-overview
+- https://learn.microsoft.com/en-us/azure/cosmos-db/vector-search
+- https://learn.microsoft.com/en-us/azure/cosmos-db/gen-ai/rag
+- https://learn.microsoft.com/en-us/cosmos-db/index-vector-data
+- https://learn.microsoft.com/en-us/azure/cosmos-db/gen-ai/hybrid-search
+- https://learn.microsoft.com/cosmos-db/query/rrf
+- https://learn.microsoft.com/en-us/cosmos-db/full-text-indexing
+- https://learn.microsoft.com/en-us/azure/azure-functions/functions-overview
+- https://learn.microsoft.com/en-us/azure/azure-functions/functions-scale
+- https://learn.microsoft.com/en-us/azure/azure-functions/security-concepts
+- https://learn.microsoft.com/en-us/azure/architecture/
+- https://learn.microsoft.com/en-us/cosmos-db/indexing-policies
+- https://learn.microsoft.com/en-us/azure/cosmos-db/index-overview
+- https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/event-driven
+- https://learn.microsoft.com/en-us/azure/stream-analytics/stream-analytics-window-functions
+- https://learn.microsoft.com/en-us/azure/stream-analytics/stream-analytics-machine-learning-anomaly-detection
+- https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/iot-azure-data-explorer
+
+## Woensdag 7 oktober 2026
+
+## Donderdag 8 oktober 2026
+
+## Vrijdag 9 oktober 2026
