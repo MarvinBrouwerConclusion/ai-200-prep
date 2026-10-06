@@ -96,8 +96,10 @@
 
   function navDot(qn,i){
     const futureLocked=qn.locked&&i>state.current;const pastLocked=i<=state.lockedBefore;
-    const cls=["qdot",i===state.current?"current":"",isAnswered(qn)?"answered":"",state.flags[qn.id]?"flagged":"",futureLocked||pastLocked?"locked":""].join(" ");
-    return `<button class="${cls}" data-index="${i}" ${!canGo(i)?"disabled":""} aria-label="Question ${i+1}">${i+1}</button>`;
+    const result=state.mode==="study"&&state.checked[qn.id]?(isCorrect(qn)?"answer-correct":"answer-incorrect"):"";
+    const resultLabel=result==="answer-correct"?", correct":result==="answer-incorrect"?", incorrect":"";
+    const cls=["qdot",i===state.current?"current":"",isAnswered(qn)?"answered":"",result,state.flags[qn.id]?"flagged":"",futureLocked||pastLocked?"locked":""].join(" ");
+    return `<button class="${cls}" data-index="${i}" ${!canGo(i)?"disabled":""} aria-label="Question ${i+1}${resultLabel}">${i+1}</button>`;
   }
   function canGo(i){if(i<0||i>=state.flat.length)return false;if(i<=state.lockedBefore)return false;const target=state.flat[i],now=current();if(target.locked&&i!==state.current)return false;return target.sectionIndex===now.sectionIndex}
 
@@ -137,6 +139,7 @@
 
   function next(){
     const qn=current();if(qn.locked&&!isAnswered(qn))return alert("You must answer this question before continuing.");
+    if(state.mode==="study"&&isAnswered(qn))state.checked[qn.id]=true;
     if(qn.locked)state.lockedBefore=state.current;
     if(state.current===state.flat.length-1)return reviewModal(true);
     const nextQ=state.flat[state.current+1];

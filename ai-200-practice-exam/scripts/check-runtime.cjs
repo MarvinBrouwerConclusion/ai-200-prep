@@ -27,11 +27,11 @@ for (const engine of ['dist', 'inline']) {
       let script;
       if (engine === 'dist') {
         const original = read('dist/app.js');
-        script = original.replace(/\n\s*welcome\(\);\s*\}\)\(\);\s*$/, '\nwindow.__review={start:mode=>{selectedMode=mode;startSession()},state:()=>state,feedback:feedbackMarkup,finish};welcome();\n})();');
+        script = original.replace(/\n\s*welcome\(\);\s*\}\)\(\);\s*$/, '\nwindow.__review={start:mode=>{selectedMode=mode;startSession()},state:()=>state,feedback:feedbackMarkup,finish,render:renderQuestion,next};welcome();\n})();');
         assert.notEqual(script, original);
       } else {
         const original = read('inline/runtime.part').replace(/<\/script>\s*$/, '');
-        script = original.replace(/\nhome\(\);\s*\}\)\(\);\s*$/, '\nwindow.__review={start,state:()=>st,feedback,finish};home();\n})();');
+        script = original.replace(/\nhome\(\);\s*\}\)\(\);\s*$/, '\nwindow.__review={start,state:()=>st,feedback,finish,render,next};home();\n})();');
         assert.notEqual(script, original);
       }
       vm.runInNewContext(script, context);
@@ -44,6 +44,25 @@ for (const engine of ['dist', 'inline']) {
         for (const [domain,count] of Object.entries(context.window.AI200_DATA.EXAM_DOMAIN_COUNTS)) {
           assert.equal(questions.filter(q=>q.domain===domain).length, count);
         }
+      }
+      if (mode === 'study') {
+        const first = questions[0];
+        if (first.type === 'order') {
+          state.answers[first.id] = [...first.answer].reverse();
+          if (JSON.stringify(state.answers[first.id]) === JSON.stringify(first.answer)) {
+            [state.answers[first.id][0], state.answers[first.id][1]] = [state.answers[first.id][1], state.answers[first.id][0]];
+          }
+        } else if (first.type === 'multi') {
+          const other = first.options.findIndex((_,index) => !first.answer.includes(index));
+          state.answers[first.id] = other >= 0 ? [other] : first.answer.slice(1);
+        } else {
+          state.answers[first.id] = (first.answer + 1) % first.options.length;
+        }
+        api.next();
+        assert.equal(state.checked[first.id], true, `${engine}: Next must check an answered Study mode question`);
+        const studyMarkup = element(engine === 'dist' ? 'app' : 'ai200-screen').innerHTML;
+        assert.ok(studyMarkup.includes('answer-incorrect'), `${engine}: incorrect Study mode question remains red`);
+        assert.ok(studyMarkup.includes('incorrect'), `${engine}: incorrect state has an accessible label`);
       }
       for (const q of questions) state.answers[q.id] = q.answer;
       const adapted = questions.find(q=>q.adapted);
@@ -62,4 +81,4 @@ for (const engine of ['dist', 'inline']) {
     }
   }
 }
-console.log('PASS: both runtimes start and score all four modes; both cases retain domain counts; adapted-source feedback and result markup checked.');
+console.log('PASS: both runtimes start and score all four modes; Study mode keeps incorrect answers marked; both cases retain domain counts; adapted-source feedback and result markup checked.');

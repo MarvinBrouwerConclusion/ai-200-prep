@@ -11,6 +11,7 @@ English-language practice application for AI-200. Open `dist/index.html` in a br
 - Quick assessment: 20 questions in 40 minutes
 - Case study drill with scenario tabs and section review
 - Study mode with immediate explanations
+- Persistent green/red question-number status in Study mode after an answer is checked or left with Next
 - Case studies with scenario tabs
 - Single choice, multiple response, ordering, and locked Yes/No problem-solution items
 - Review flags, question comments, section review, breaks, and Microsoft Learn links
