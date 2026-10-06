@@ -5,7 +5,7 @@ English-language practice application for AI-200. Open `dist/index.html` in a br
 ## Included
 
 - 263 verified practice questions mapped to the current AI-200 skills outline
-- 133 verbatim Microsoft Learn module-assessment questions from all 27 modules in the official AI-200 course, with their official correct-answer explanations and source URLs
+- 133 questions from Microsoft Learn module assessments across all 27 AI-200 modules, including technical adaptations with original module and technical reference URLs
 - Free preview questions from external practice providers are reworded and checked against technical documentation
 - Full simulation: 50 questions in 100 minutes
 - Quick assessment: 20 questions in 40 minutes
@@ -21,7 +21,7 @@ English-language practice application for AI-200. Open `dist/index.html` in a br
 
 This is an independent study tool, not an official Microsoft product. Microsoft Learn assessment items remain attributed to their source; the other questions are original or source-based adaptations. The exact real-exam question count, order, case studies, and presence of labs can vary.
 
-Microsoft currently states that an official AI-200 Practice Assessment is not available. The Microsoft questions included here come from the public module assessments in the official AI-200 course. They are genuine Microsoft learning questions, but they are not live exam questions.
+Microsoft currently states that an official AI-200 Practice Assessment is not available. The Microsoft-sourced questions come from public module assessments in the official AI-200 course. Items marked as adapted contain technical corrections or clarified scenarios; they are not verbatim Microsoft questions or live exam questions.
 
 The 100-minute full simulation models Microsoft's associate/expert role-based exam profile without a lab. Microsoft says these exams usually contain 40–60 questions. Exams that may contain labs use a 120-minute exam profile. Check the real exam's introduction screen for its actual sections. For the official interface and question-type demonstration, use https://aka.ms/examdemo.
 
@@ -29,11 +29,13 @@ The 100-minute full simulation models Microsoft's associate/expert role-based ex
 
 Single-choice and multiple-response options are shuffled once per session, with correct-answer indexes remapped. Yes/No options retain their familiar order. Full simulations include case-study and locked items in the domain totals: 12 container, 14 data, 12 services, and 12 operations questions (24%, 28%, 24%, and 24%). The practice score is the percentage correct scaled to 1000, not Microsoft's scoring formula.
 
-After changing the question bank or inline runtime, run `node scripts/build-inline.cjs` to update both embedded HTML versions, then `node scripts/check-questions.cjs` to check answer mappings, domain selection, and embedded-content consistency.
+After changing the question bank or inline runtime, run `node scripts/build-inline.cjs` to update both embedded HTML versions, then `node scripts/check-questions.cjs` to check answer mappings, domain selection, and embedded-content consistency. Run `node scripts/check-runtime.cjs` to smoke-test session startup, feedback and scoring in both app versions.
 
 Technical review clarified Service Bus redelivery versus duplicate sends, ACR RBAC versus ABAC roles, App Service sidecar port configuration, Key Vault refresh and secret rotation, Cosmos DB consistency and vector-index limits, Python pagination, and SDK credentials versus Functions binding configuration. Question C13 now tests a concrete diagnostic action instead of requiring an arbitrary troubleshooting order.
 
 ## Primary references
+
+The module-question review corrected or clarified 34 items: MS001, MS014, MS028, MS035, MS036, MS037, MS052, MS054, MS055, MS056, MS058, MS059, MS060, MS063, MS069, MS070, MS071, MS073, MS075, MS076, MS077, MS082, MS085, MS088, MS089, MS090, MS096, MS098, MS111, MS116, MS118, MS124, MS128, and MS130. Original module URLs are retained separately from technical references and shown in answer feedback. Corrections cover Redis recovery and expiry, Cosmos DB consistency and query semantics, secret version selection, vector-model migration, Kubernetes configuration, Functions concurrency, and telemetry interpretation.
 
 - https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/ai-200
 - https://learn.microsoft.com/en-us/credentials/certifications/azure-ai-cloud-developer-associate/

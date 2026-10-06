@@ -11,6 +11,12 @@ const all = [...data.QUESTION_BANK, ...data.CASES.flatMap(c => c.questions), ...
 assert.equal(all.length, 263);
 assert.equal(new Set(all.map(q => q.id)).size, 263);
 assert.equal(all.filter(q => q.official).length, 133);
+assert.equal(all.filter(q => q.adapted).length, 34);
+for (const q of all.filter(q => q.official)) {
+  assert.ok(q.assessmentSource.startsWith('https://learn.microsoft.com/en-us/training/modules/'), q.id);
+  assert.equal(q.practiceSource, undefined, q.id);
+}
+assert.ok(!all.some(q => JSON.stringify(q).includes('\uFFFD')), 'Question text must not contain replacement characters');
 const original = JSON.stringify(all);
 let seed = 123456;
 function shuffle(input) {

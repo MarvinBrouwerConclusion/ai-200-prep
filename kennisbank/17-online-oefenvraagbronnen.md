@@ -4,7 +4,7 @@
 
 1. Gebruik eerst echte Microsoft-vragen uit de officiële AI-200-leerpaden.
 2. Gebruik daarna bestaande, openbaar bereikbare AI-200-voorbeeldvragen.
-3. Controleer ieder niet-Microsoft-antwoord tegen actuele officiële Microsoft-documentatie.
+3. Controleer ieder antwoord, ook Microsoft-moduleantwoorden, tegen actuele officiële technische documentatie.
 4. Herformuleer alleen wanneer dit nodig is voor duidelijkheid, actualiteit of auteursrecht.
 5. Vermeld de oefenbron en de officiële technische bron.
 6. Voeg geen zelfbedachte vragen toe zolang er echte voorbeeldvragen beschikbaar zijn.
@@ -13,7 +13,7 @@
 
 ## Officiële Microsoft-vragen
 
-Microsoft vermeldt op 6 oktober 2026 dat de officiële AI-200 Practice Assessment nog niet beschikbaar is. De officiële AI-200-cursus heeft wel 27 openbare modules met samen **133 moduletoetsvragen**. Deze 133 vragen, antwoordopties en uitleg zijn rechtstreeks met bronvermelding in de app opgenomen.
+Microsoft vermeldt op 6 oktober 2026 dat de officiële AI-200 Practice Assessment nog niet beschikbaar is. De officiële AI-200-cursus heeft wel 27 openbare modules met samen **133 moduletoetsvragen**. Alle 133 zijn met bronvermelding opgenomen. Na technische controle zijn 34 vragen of toelichtingen gecorrigeerd of verduidelijkt; die zijn in de app als bewerking gemarkeerd. De oorspronkelijke modulebron blijft beschikbaar naast de technische controlebron.
 
 - AI-200-certificeringspagina: https://learn.microsoft.com/en-us/credentials/certifications/azure-ai-cloud-developer-associate/
 - Officiële cursus met negen leerpaden: https://learn.microsoft.com/en-us/training/courses/ai-200t00
@@ -23,7 +23,7 @@ Microsoft vermeldt op 6 oktober 2026 dat de officiële AI-200 Practice Assessmen
 
 | Bron | Gratis beschikbaar | Gebruik |
 |---|---:|---|
-| Microsoft Learn AI-200-cursus | 133 moduletoetsvragen in 27 modules | Alle 133 exact en met bronvermelding verwerkt |
+| Microsoft Learn AI-200-cursus | 133 moduletoetsvragen in 27 modules | Alle 133 verwerkt; 34 technisch gecorrigeerd of verduidelijkt, met oorspronkelijke bron behouden |
 | AI-200 Prep | 30 oefenvragen en een beperkte mock van 20 | Onderwerpen verwerkt en technisch controleren |
 | The Data Community | 2 openbare sets van 30 | 60 openbare vragen als inhoudsbron |
 | PrepifyLabs | 40 volgens de openbare productpagina | Gratis preview gebruiken zodra de vragen zonder omweg bereikbaar zijn |
