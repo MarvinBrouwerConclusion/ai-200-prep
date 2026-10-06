@@ -22,6 +22,14 @@ This is an independent study tool, not an official Microsoft product. Questions 
 
 The 100-minute full simulation models Microsoft's associate/expert role-based exam profile without a lab. Microsoft says these exams usually contain 40–60 questions. Exams that may contain labs use a 120-minute exam profile. Check the real exam's introduction screen for its actual sections. For the official interface and question-type demonstration, use https://aka.ms/examdemo.
 
+## Question-bank validation
+
+Single-choice and multiple-response options are shuffled once per session, with correct-answer indexes remapped. Yes/No options retain their familiar order. Full simulations include case-study and locked items in the domain totals: 12 container, 14 data, 12 services, and 12 operations questions (24%, 28%, 24%, and 24%). The practice score is the percentage correct scaled to 1000, not Microsoft's scoring formula.
+
+After changing the question bank or inline runtime, run `node scripts/build-inline.cjs` to update both embedded HTML versions, then `node scripts/check-questions.cjs` to check answer mappings, domain selection, and embedded-content consistency.
+
+Technical review clarified Service Bus redelivery versus duplicate sends, ACR RBAC versus ABAC roles, App Service sidecar port configuration, Key Vault refresh and secret rotation, Cosmos DB consistency and vector-index limits, Python pagination, and SDK credentials versus Functions binding configuration. Question C13 now tests a concrete diagnostic action instead of requiring an arbitrary troubleshooting order.
+
 ## Primary references
 
 - https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/ai-200

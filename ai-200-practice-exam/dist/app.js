@@ -25,7 +25,7 @@
           <button class="mode-card" data-mode="study"><strong>Study mode</strong><span>All ${QUESTION_BANK.length+CASES.reduce((n,c)=>n+c.questions.length,0)+LOCKED_SET.questions.length} questions · no timer · immediate explanations</span></button>
         </div>
         <h3>What the simulator reproduces</h3>
-        <ul><li>Question counter, timer, review flags, comments, section review, and exam summary</li><li>Single choice, multiple response, build-list ordering, case studies, and non-reviewable problem/solution items</li><li>Domain-weighted scoring and a weak-area report</li><li>Optional Microsoft Learn reference panel while the clock continues</li></ul>
+        <ul><li>Question counter, timer, review flags, comments, section review, and exam summary</li><li>Single choice, multiple response, build-list ordering, case studies, and non-reviewable problem/solution items</li><li>Question selection aligned to exam domain ranges and a weak-area report</li><li>Optional Microsoft Learn reference panel while the clock continues</li></ul>
         ${history.length?`<p><strong>Last attempt:</strong> ${history[0].score}/1000 · ${history[0].passed?"Pass":"Not passed"} · ${esc(history[0].date)}</p>`:""}
         <div class="actions"><button id="start" class="primary">Begin session</button></div>
       </div></section></main>`;
@@ -58,7 +58,7 @@
     let sections=[];let seconds=0;
     if(selectedMode==="exam"){
       const caseStudy=CASES[Math.floor(Math.random()*CASES.length)];
-      const main=shuffle([...pick("containers",9),...pick("data",12),...pick("services",10),...pick("operations",10)]);
+      const main=window.AI200_DATA.selectExamQuestions(caseStudy,shuffle);
       const caseSection={id:"case",title:`Case study: ${caseStudy.title}`,questions:caseStudy.questions,caseData:caseStudy.tabs,reviewable:true};
       const mainSection={id:"main",title:"General questions",questions:main,reviewable:true};
       sections=Math.random()<.5?[caseSection,mainSection]:[mainSection,caseSection];
@@ -72,6 +72,7 @@
       const all=[...QUESTION_BANK,...CASES.flatMap(c=>c.questions),...LOCKED_SET.questions.map(x=>({...x,locked:false}))];
       sections=[{id:"study",title:"Study mode",questions:shuffle(all),reviewable:true}];seconds=0;
     }
+    sections=sections.map(section=>({...section,questions:section.questions.map(question=>window.AI200_DATA.prepareQuestion(question,shuffle))}));
     const flat=sections.flatMap((s,si)=>s.questions.map((x,qi)=>({...x,sectionIndex:si,indexInSection:qi,sectionTitle:s.title})));
     state={mode:selectedMode,sections,flat,current:0,answers:{},flags:{},comments:{},lockedBefore:-1,seconds,started:Date.now(),checked:{}};
     if(seconds){timerId=setInterval(()=>{state.seconds--;const el=document.getElementById("timer");if(el)el.textContent=fmt(state.seconds);if(state.seconds<=0){clearInterval(timerId);finish(true)}},1000)}

@@ -1,0 +1,13 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const root = path.resolve(__dirname, '..');
+const read = file => fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
+const escape = text => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+const oldForm = read('ai-200-exam-form.html').trimEnd();
+const form = read('inline/head.part').trimEnd() + '\n' + read('dist/questions.js').trimEnd() + '\n' + read('inline/runtime.part').trim() + '\n';
+let preview = read('inline-preview.html');
+const oldEmbedded = escape(oldForm);
+if (!preview.includes(oldEmbedded)) throw new Error('Preview does not contain the existing form; refusing to replace unrelated content');
+preview = preview.replace(oldEmbedded, escape(form.trimEnd()));
+fs.writeFileSync(path.join(root, 'ai-200-exam-form.html'), form);
+fs.writeFileSync(path.join(root, 'inline-preview.html'), preview);
