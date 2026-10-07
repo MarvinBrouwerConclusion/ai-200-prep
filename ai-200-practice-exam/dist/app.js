@@ -16,6 +16,11 @@
   const same=(a,b)=>Array.isArray(a)&&Array.isArray(b)?a.length===b.length&&a.every((v,i)=>v===b[i]):a===b;
   const fmt=t=>`${String(Math.floor(t/60)).padStart(2,"0")}:${String(t%60).padStart(2,"0")}`;
   function pick(domain,n){return shuffle(QUESTION_BANK.filter(x=>x.domain===domain)).slice(0,n)}
+  function groupInstructorQuestions(input){
+    const selected=[...input].sort((a,b)=>(a.number||0)-(b.number||0));
+    const titles=[...new Set(INSTRUCTOR_SAMPLE.map(q=>q.scenarioText?.title).filter(Boolean))];
+    return [...selected.filter(q=>!q.scenarioText),...titles.flatMap(title=>selected.filter(q=>q.scenarioText?.title===title))];
+  }
 
   function welcome(){
     clearInterval(timerId);state=null;
@@ -30,7 +35,7 @@
           <button class="mode-card" data-mode="quick"><strong>Quick assessment</strong><span>20 questions · 40 minutes · weighted across all four domains</span></button>
           <button class="mode-card" data-mode="case"><strong>Case study drill</strong><span>5 questions · scenario tabs · review before leaving · no separate timer</span></button>
           <button class="mode-card" data-mode="study"><strong>Study mode</strong><span>All ${QUESTION_BANK.length+CASES.reduce((n,c)=>n+c.questions.length,0)+LOCKED_SET.questions.length} questions · no timer · immediate explanations</span></button>
-          <button class="mode-card" data-mode="sample"><strong>Instructor sample set</strong><span>All ${INSTRUCTOR_SAMPLE.length} supplied questions · native text and controls · code rendered as snippets</span></button>
+          <button class="mode-card" data-mode="sample"><strong>Instructor sample set</strong><span>All ${INSTRUCTOR_SAMPLE.length} supplied questions · case studies kept together · native controls</span></button>
         </div>
         <div class="source-picker"><label for="examSource"><strong>Official exam flow question source</strong></label><select id="examSource"><option value="mixed">Mixed: curated + instructor sample</option><option value="curated">Curated bank only</option><option value="sample">Instructor sample only</option></select></div>
         <h3>What the simulator reproduces</h3>
@@ -70,7 +75,8 @@
       const caseStudy=CASES[Math.floor(Math.random()*CASES.length)];
       const curated=window.AI200_DATA.selectExamQuestions(caseStudy,shuffle);
       const sampleCount=selectedSource==="mixed"?15:selectedSource==="sample"?curated.length:0;
-      const main=sampleCount?[...shuffle(curated).slice(0,curated.length-sampleCount),...shuffle(INSTRUCTOR_SAMPLE).slice(0,sampleCount)]:curated;
+      const selectedSample=sampleCount?groupInstructorQuestions(shuffle(INSTRUCTOR_SAMPLE).slice(0,sampleCount)):[];
+      const main=sampleCount?[...shuffle(curated).slice(0,curated.length-sampleCount),...selectedSample]:curated;
       const caseSection={id:"case",title:`Case study: ${caseStudy.title}`,questions:caseStudy.questions,caseData:caseStudy.tabs,reviewable:true};
       const mainSection={id:"main",title:"General questions",questions:main,reviewable:true};
       sections=Math.random()<.5?[caseSection,mainSection]:[mainSection,caseSection];
@@ -81,7 +87,7 @@
       const caseStudy=CASES[Math.floor(Math.random()*CASES.length)];
       sections=[{id:"case",title:`Case study: ${caseStudy.title}`,questions:caseStudy.questions,caseData:caseStudy.tabs,reviewable:true}];seconds=0;
     }else if(selectedMode==="sample"){
-      sections=[{id:"sample",title:"Instructor sample exam",questions:[...INSTRUCTOR_SAMPLE],reviewable:true}];seconds=0;
+      sections=[{id:"sample",title:"Instructor sample exam",questions:groupInstructorQuestions(INSTRUCTOR_SAMPLE),reviewable:true}];seconds=0;
     }else{
       const all=[...QUESTION_BANK,...CASES.flatMap(c=>c.questions),...LOCKED_SET.questions.map(x=>({...x,locked:false}))];
       sections=[{id:"study",title:"Study mode",questions:shuffle(all),reviewable:true}];seconds=0;

@@ -4,6 +4,15 @@ const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
+const assertScenarioBlocks = (questions, label) => {
+  const firstScenario = questions.findIndex(q => q.scenarioText);
+  if (firstScenario < 0) return;
+  assert.ok(questions.slice(0, firstScenario).every(q => !q.scenarioText), `${label}: general questions precede the case studies`);
+  assert.ok(questions.slice(firstScenario).every(q => q.scenarioText), `${label}: general questions do not interrupt a case study`);
+  const titles = questions.slice(firstScenario).map(q => q.scenarioText.title);
+  const runs = titles.filter((title, index) => index === 0 || title !== titles[index - 1]);
+  assert.equal(runs.length, new Set(titles).size, `${label}: each case study is one contiguous block`);
+};
 
 // Run session startup, feedback and results with a small in-memory DOM facade.
 for (const engine of ['dist', 'inline']) {
@@ -45,6 +54,7 @@ for (const engine of ['dist', 'inline']) {
       if (engine === 'dist') assert.equal(element('app').innerHTML.includes('Take a break'),['exam','quick'].includes(mode),`${mode}: break control matches timed-session behavior`);
       if (engine === 'dist' && mode === 'exam') {
         assert.equal(questions.filter(q=>q.id.startsWith('INS')).length, 15, 'mixed official flow contains 15 instructor questions');
+        assertScenarioBlocks(questions.filter(q=>q.id.startsWith('INS')), 'mixed official flow instructor questions');
       }
       if (engine === 'dist' && mode === 'sample') {
         const typeCounts = questions.reduce((counts,q)=>((counts[q.type]=(counts[q.type]||0)+1),counts),{});
@@ -53,6 +63,7 @@ for (const engine of ['dist', 'inline']) {
         assert.equal(typeCounts.sample||0, 0, 'no instructor question depends on a full question screenshot');
         assert.equal(typeCounts.matrix, 48, 'all former visual answer areas use native matrix controls');
         assert.equal(questions.length, 174, 'all instructor questions are natively rendered');
+        assert.equal(questions.filter(q=>q.locked).length,0,'all instructor questions remain freely navigable in self-paced mode');
         assert.equal(questions.filter(q=>!['manual','manualText'].includes(q.type)).length,174,'all 174 instructor questions are automatically gradable');
         for (const q of questions) {
           assert.ok(!ocrDebris.test(JSON.stringify(q)), `${q.id}: known OCR debris must be removed`);
@@ -77,7 +88,12 @@ for (const engine of ['dist', 'inline']) {
           assert.equal(png.readUInt32BE(20),824,`${imagePath}: Avanset header and footer are cropped`);
         }
         assert.ok(scenarios.every(q=>q.scenarioText&&q.scenarioText.sections.length>=4),'every supplied scenario has readable structured text');
+        assert.ok(scenarios.every(q=>q.scenarioText.sections[0].heading==='Case study instructions'),'readable scenarios include the case-study instructions');
+        assert.ok(scenarios.every(q=>q.scenarioText.sections[0].paragraphs.some(p=>p.includes('cannot return'))),'readable scenarios retain the no-return warning');
         assert.equal(new Set(scenarios.map(q=>q.scenarioText.title)).size,2,'the two supplied case studies are transcribed once and reused');
+        assertScenarioBlocks(questions, 'instructor sample mode');
+        const scenarioRuns = scenarios.map(q=>q.scenarioText.title).filter((title,index,titles)=>index===0||title!==titles[index-1]);
+        assert.equal(scenarioRuns.join(' | '),'Fabrikam retail analytics platform | Proseware knowledge management platform','instructor cases retain their intended order');
         state.current=questions.findIndex(q=>q.prompt.includes('Requirements:\n-'));api.render();
         const sampleMarkup = element('app').innerHTML;
         assert.ok(sampleMarkup.includes('prompt-heading')&&sampleMarkup.includes('<ul>'),'structured prompts render headings and semantic lists');
@@ -125,6 +141,15 @@ for (const engine of ['dist', 'inline']) {
         assert.ok(studyMarkup.includes('answer-incorrect'), `${engine}: incorrect Study mode question remains red`);
         assert.ok(studyMarkup.includes('incorrect'), `${engine}: incorrect state has an accessible label`);
       }
+      if (engine === 'dist' && mode === 'quick' && randomValue === 0.1) {
+        questions.slice(0, 10).forEach(q => { state.answers[q.id] = q.answer; });
+        api.finish();
+        const partialMarkup = element('app').innerHTML;
+        assert.ok(partialMarkup.includes('<strong>500</strong>'), 'a half-correct quick session scores 500');
+        assert.ok(partialMarkup.includes('<h1 class="fail">Not passed</h1>'), 'a score below 700 is not passed');
+        assert.ok(partialMarkup.includes('10 of 20 automatically gradable questions correct'), 'results show the correct answer count');
+        assert.equal((partialMarkup.match(/<details class="review-answer">/g)||[]).length,20,'results include every question in answer review');
+      }
       for (const q of questions) state.answers[q.id] = q.answer;
       const adapted = questions.find(q=>q.adapted);
       if (adapted) {
@@ -142,8 +167,9 @@ for (const engine of ['dist', 'inline']) {
       if (engine === 'dist' && mode === 'exam' && randomValue === 0.1) {
         api.start('exam','sample');
         assert.equal(api.state().flat.filter(q=>q.id.startsWith('INS')).length,41,'instructor-only official flow contains 41 instructor questions plus case and locked sections');
+        assertScenarioBlocks(api.state().flat.filter(q=>q.id.startsWith('INS')),'instructor-only official flow');
       }
     }
   }
 }
-console.log('PASS: both runtimes start and score every mode; all 174 instructor questions render natively; matrix, code, drag, matching, Study mode state, domain counts, feedback, and results checked.');
+console.log('PASS: both runtimes start and score every mode; case studies stay grouped; all 174 instructor questions render natively; matrix, code, drag, matching, Study mode state, domain counts, feedback, and results checked.');

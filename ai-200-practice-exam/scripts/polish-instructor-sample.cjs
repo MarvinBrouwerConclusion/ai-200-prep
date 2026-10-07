@@ -847,9 +847,20 @@ function fallbackExplanation(question) {
   return `Correct answer: ${indexes.map(index => question.options[index]).join('; ')}.`;
 }
 
+const caseStudyInstructions = {
+  heading: 'Case study instructions',
+  paragraphs: [
+    'This is a case study. Case studies are not timed separately from other exam sections. You can use as much exam time as you need to complete each case study. However, there might be additional case studies or other exam sections. Manage your time so that you can complete all exam sections within the available time.',
+    'To answer the case study questions, use the information provided in the case. Case studies and associated questions can contain exhibits or other resources. Information provided in an individual question does not apply to the other questions in the case study.',
+    'A Review Screen appears at the end of the case study. From that screen, you can review and change your answers before moving to the next exam section. After you leave the case study, you cannot return to it.',
+    'To begin answering, select Next. Use the information sections for the business requirements, current environment, and problem statements. When you are ready to answer a question, return to the Question view.'
+  ]
+};
+
 const fabrikamScenario = {
   title: 'Fabrikam retail analytics platform',
   sections: [
+    caseStudyInstructions,
     {
       heading: 'Background',
       paragraphs: [
@@ -922,6 +933,7 @@ const fabrikamScenario = {
 const prosewareScenario = {
   title: 'Proseware knowledge management platform',
   sections: [
+    caseStudyInstructions,
     {
       heading: 'Background',
       paragraphs: [
@@ -1009,6 +1021,7 @@ for (const question of sample.questions) {
   if (question.explanation || explanationOverrides[question.id]) {
     question.explanation = cleanExplanation(explanationOverrides[question.id] || fallbackExplanation(question));
   }
+  if (question.id === 'INS143') delete question.locked;
   if (question.contextPage) question.scenarioText = scenarioByContext[path.basename(question.contextPage)] || null;
 }
 
