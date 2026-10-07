@@ -252,6 +252,19 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
 
   const speechReady="speechSynthesis"in window;
   let audioVoices=[],audioVoice=null,audioRate=parseFloat(localStorage.getItem("ai200-audio-rate"))||1.5,audioToken=0,wakeLock=null;
+  // Respellings applied to spoken audio only (not the on-screen text). Add terms here as needed.
+  const PRONUNCIATIONS={
+    "Kubernetes":"koo-ber-net-eez","kubectl":"cube control","kubelet":"cube-let","kubeconfig":"cube config",
+    "AKS":"A K S","ACR":"A C R","ACA":"A C A","AAD":"A A D","RBAC":"are-back","ABAC":"ay-back",
+    "PostgreSQL":"Postgres Q L","psql":"P S Q L","pgvector":"P G vector","PgBouncer":"P G Bouncer",
+    "nginx":"engine X","YAML":"yam-ul","JSON":"jason","SKU":"skew","SKUs":"skews","Redis":"red-iss",
+    "gRPC":"G R P C","RRF":"R R F","Qdrant":"Q-drant","Cosmos DB":"Cosmos D B","NoSQL":"no-sequel",
+    "OIDC":"O I D C","JWT":"J W T","PaaS":"pass","SaaS":"sass","IaaS":"i-a-a-s","TTL":"T T L",
+    "az":"A Z","CLI":"C L I","SDK":"S D K","API":"A P I","PVC":"P V C","CORS":"cores"
+  };
+  const PRONUNCIATION_MAP={};Object.keys(PRONUNCIATIONS).forEach(k=>PRONUNCIATION_MAP[k.toLowerCase()]=PRONUNCIATIONS[k]);
+  const PRONUNCIATION_RE=new RegExp("\\b("+Object.keys(PRONUNCIATIONS).sort((a,b)=>b.length-a.length).map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")\\b","gi");
+  const pronounce=text=>String(text).replace(PRONUNCIATION_RE,m=>PRONUNCIATION_MAP[m.toLowerCase()]);
   function loadVoices(){
     if(!speechReady)return;
     audioVoices=speechSynthesis.getVoices()||[];
@@ -268,7 +281,7 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
     const step=()=>{
       if(token!==audioToken)return;
       if(i>=parts.length){onDone&&onDone();return}
-      const u=new SpeechSynthesisUtterance(parts[i++]);
+      const u=new SpeechSynthesisUtterance(pronounce(parts[i++]));
       if(audioVoice)u.voice=audioVoice;u.rate=audioRate;u.onend=step;u.onerror=step;
       speechSynthesis.speak(u);
     };
