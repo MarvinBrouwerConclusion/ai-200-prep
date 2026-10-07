@@ -94,6 +94,16 @@ for (const engine of ['dist', 'inline']) {
         assertScenarioBlocks(questions, 'instructor sample mode');
         const scenarioRuns = scenarios.map(q=>q.scenarioText.title).filter((title,index,titles)=>index===0||title!==titles[index-1]);
         assert.equal(scenarioRuns.join(' | '),'Fabrikam retail analytics platform | Proseware knowledge management platform','instructor cases retain their intended order');
+        state.current=questions.findIndex(q=>q.scenarioText?.title==='Fabrikam retail analytics platform');api.render();
+        const fabrikamMarkup=element('app').innerHTML;
+        assert.ok(fabrikamMarkup.includes('Current case study')&&fabrikamMarkup.includes('Fabrikam retail analytics platform'),'Fabrikam questions identify their current case study');
+        assert.ok(fabrikamMarkup.includes('Open Fabrikam retail analytics platform'),'scenario launcher names the Fabrikam story');
+        assert.ok(!fabrikamMarkup.includes('Proseware knowledge management platform'),'Fabrikam questions do not show the Proseware label');
+        state.current=questions.findIndex(q=>q.scenarioText?.title==='Proseware knowledge management platform');api.render();
+        const prosewareMarkup=element('app').innerHTML;
+        assert.ok(prosewareMarkup.includes('Current case study')&&prosewareMarkup.includes('Proseware knowledge management platform'),'Proseware questions identify their current case study');
+        assert.ok(prosewareMarkup.includes('Open Proseware knowledge management platform'),'scenario launcher names the Proseware story');
+        assert.ok(!prosewareMarkup.includes('Fabrikam retail analytics platform'),'Proseware questions do not show the Fabrikam label');
         state.current=questions.findIndex(q=>q.prompt.includes('Requirements:\n-'));api.render();
         const sampleMarkup = element('app').innerHTML;
         assert.ok(sampleMarkup.includes('prompt-heading')&&sampleMarkup.includes('<ul>'),'structured prompts render headings and semantic lists');

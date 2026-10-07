@@ -12,7 +12,7 @@ English-language practice application for AI-200. Open `dist/index.html` in a br
 - Case study drill with scenario tabs and section review
 - Study mode with immediate explanations
 - Persistent green/red question-number status in Study mode after an answer is checked or left with Next
-- Built-in full-screen supplied-scenario viewer with readable structured text and a cropped original-image view
+- Built-in full-screen supplied-scenario viewer with a persistent case-study name, readable structured text, and a cropped original-image view
 - Single choice, multiple response, ordering, and locked Yes/No problem-solution items
 - Review flags, question comments, section review, timed-session breaks, and Microsoft Learn links
 - Estimated 0-1000 practice score and performance by domain

@@ -32,6 +32,10 @@ Open `ai-200-practice-exam/dist/index.html` lokaal in een browser om de simulato
 
 ![AI-200 supplied scenario popup](ai-200-practice-exam/docs/screenshots/scenario-popup.png)
 
+### Zichtbare aanduiding van de actieve case study
+
+![AI-200 actieve case study](ai-200-practice-exam/docs/screenshots/case-study-label.png)
+
 ### Score en antwoordcontrole
 
 ![AI-200 score en antwoordcontrole](ai-200-practice-exam/docs/screenshots/results-screen.png)

@@ -7,6 +7,7 @@ const { spawn, spawnSync } = require('node:child_process');
 
 const root = path.resolve(__dirname, '..');
 const screenshotPath = path.join(root, 'docs', 'screenshots', 'results-screen.png');
+const caseScreenshotPath = path.join(root, 'docs', 'screenshots', 'case-study-label.png');
 const browserCandidates = process.platform === 'win32'
   ? [
       'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
@@ -148,8 +149,29 @@ async function main() {
 
   const screenshot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, fromSurface: true });
   fs.writeFileSync(screenshotPath, Buffer.from(screenshot.data, 'base64'));
-  console.log(`PASS: completed a 20-question browser session; results show ${summary.score}/1000 (${summary.outcome}), 20 review items, and ${summary.domains} skill areas.`);
+  await evaluate(`document.querySelector('#again').click(); document.querySelector('[data-mode="sample"]').click(); document.querySelector('#start').click(); true`);
+  await waitFor('!!document.querySelector("#ack")', 'Instructor sample instructions did not open');
+  await evaluate(`document.querySelector('#ack').click(); document.querySelector('#launch').click(); true`);
+  await waitFor('document.querySelector(".top-count")?.textContent.includes("of 174")', 'Instructor sample set did not start');
+  const caseIndexes = await evaluate(`(() => {
+    const questions = window.AI200_INSTRUCTOR_SAMPLE.questions;
+    const general = questions.filter(q => !q.scenarioText).length;
+    const fabrikam = questions.filter(q => q.scenarioText?.title === 'Fabrikam retail analytics platform').length;
+    return { fabrikam: general, proseware: general + fabrikam };
+  })()`);
+  for (const [title, index] of [['Fabrikam retail analytics platform', caseIndexes.fabrikam], ['Proseware knowledge management platform', caseIndexes.proseware]]) {
+    await evaluate(`document.querySelector('[data-index="${index}"]').click(); true`);
+    const visibleCase = await waitFor(`document.querySelector('.active-case strong')?.textContent`, `${title} label did not render`);
+    const visibleLauncher = await evaluate(`document.querySelector('.scenario-launch strong')?.textContent`);
+    assert.equal(visibleCase, title);
+    assert.equal(visibleLauncher, `Open ${title}`);
+  }
+  await evaluate('window.scrollTo(0, 0); true');
+  const caseScreenshot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false, fromSurface: true });
+  fs.writeFileSync(caseScreenshotPath, Buffer.from(caseScreenshot.data, 'base64'));
+  console.log(`PASS: completed a 20-question browser session; results show ${summary.score}/1000 (${summary.outcome}), 20 review items, and ${summary.domains} skill areas; both instructor case-study labels render correctly.`);
   console.log(`Screenshot: ${screenshotPath}`);
+  console.log(`Screenshot: ${caseScreenshotPath}`);
   socket.close();
 }
 
