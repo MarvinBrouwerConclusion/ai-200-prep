@@ -257,10 +257,11 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
     "Kubernetes":"koo-ber-net-eez","kubectl":"cube control","kubelet":"cube-let","kubeconfig":"cube config",
     "AKS":"A K S","ACR":"A C R","ACA":"A C A","AAD":"A A D","RBAC":"are-back","ABAC":"ay-back",
     "PostgreSQL":"Postgres Q L","psql":"P S Q L","pgvector":"P G vector","PgBouncer":"P G Bouncer",
-    "nginx":"engine X","YAML":"yam-ul","JSON":"jason","SKU":"skew","SKUs":"skews","Redis":"red-iss",
+    "nginx":"engine X","YAML":"yam-ul","JSON":"jason","SKU":"skew","SKUs":"skews","Redis":"reddiss",
     "gRPC":"G R P C","RRF":"R R F","Qdrant":"Q-drant","Cosmos DB":"Cosmos D B","NoSQL":"no-sequel",
     "OIDC":"O I D C","JWT":"J W T","PaaS":"pass","SaaS":"sass","IaaS":"i-a-a-s","TTL":"T T L",
-    "az":"A Z","CLI":"C L I","SDK":"S D K","API":"A P I","PVC":"P V C","CORS":"cores"
+    "az":"A Z","CLI":"C L I","SDK":"S D K","API":"A P I","PVC":"P V C","CORS":"cores",
+    "dataset":"data set","datasets":"data sets"
   };
   const PRONUNCIATION_MAP={};Object.keys(PRONUNCIATIONS).forEach(k=>PRONUNCIATION_MAP[k.toLowerCase()]=PRONUNCIATIONS[k]);
   const PRONUNCIATION_RE=new RegExp("\\b("+Object.keys(PRONUNCIATIONS).sort((a,b)=>b.length-a.length).map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")\\b","gi");
@@ -275,14 +276,30 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
   }
   if(speechReady)speechSynthesis.addEventListener("voiceschanged",()=>{loadVoices();if(state&&state.mode==="audio")renderAudio()});
   function stopSpeech(){audioToken++;if(speechReady)try{speechSynthesis.cancel()}catch(e){}}
-  function speakSequence(parts,onDone){
+  // Builds the exact spoken string (with respellings) plus display tokens mapped to their spoken char ranges.
+  function buildSpokenTokens(text){
+    const tokens=[];let spoken="",last=0,m;
+    PRONUNCIATION_RE.lastIndex=0;
+    const addLiteral=lit=>{const re=/(\s+)|(\S+)/g;let t;while((t=re.exec(lit))){if(t[1]){spoken+=t[1]}else{const start=spoken.length;spoken+=t[2];tokens.push({display:t[2],start})}}};
+    while((m=PRONUNCIATION_RE.exec(text))){addLiteral(text.slice(last,m.index));const start=spoken.length;spoken+=PRONUNCIATION_MAP[m[0].toLowerCase()];tokens.push({display:m[0],start});last=m.index+m[0].length}
+    addLiteral(text.slice(last));
+    return {spoken,tokens};
+  }
+  function tokenAt(tokens,ci){let idx=-1;for(let k=0;k<tokens.length;k++){if(tokens[k].start<=ci)idx=k;else break}return idx}
+  function clearHighlight(){document.querySelectorAll(".aw.speaking").forEach(el=>el.classList.remove("speaking"))}
+  function highlightWord(si,ti){clearHighlight();if(ti<0)return;const el=document.getElementById(`aw-${si}-${ti}`);if(el)el.classList.add("speaking")}
+  function speakSegments(segments,onDone){
     if(!speechReady)return;
-    const token=audioToken;let i=0;
+    const token=audioToken;let si=0;
     const step=()=>{
       if(token!==audioToken)return;
-      if(i>=parts.length){onDone&&onDone();return}
-      const u=new SpeechSynthesisUtterance(pronounce(parts[i++]));
-      if(audioVoice)u.voice=audioVoice;u.rate=audioRate;u.onend=step;u.onerror=step;
+      clearHighlight();
+      if(si>=segments.length){onDone&&onDone();return}
+      const seg=segments[si],myIndex=si;si++;
+      const u=new SpeechSynthesisUtterance(seg.spoken);
+      if(audioVoice)u.voice=audioVoice;u.rate=audioRate;
+      u.onboundary=e=>{if(token!==audioToken)return;if(e.name&&e.name!=="word"&&e.name!=="")return;highlightWord(myIndex,tokenAt(seg.tokens,e.charIndex||0))};
+      u.onend=step;u.onerror=step;
       speechSynthesis.speak(u);
     };
     step();
@@ -303,6 +320,13 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
     return qn.options[a];
   }
   function promptParts(text){return String(text??"").split(/\r?\n+|(?<=[.?!:])\s+/).map(s=>s.trim()).filter(Boolean)}
+  function buildSegments(qn){
+    const segs=promptParts(qn.prompt).map(t=>({area:"prompt",...buildSpokenTokens(t)}));
+    segs.push({area:"label",...buildSpokenTokens("The correct answer is:")});
+    segs.push({area:"answer",...buildSpokenTokens(spokenAnswer(qn))});
+    return segs;
+  }
+  const renderSeg=(seg,si)=>seg.tokens.map((tok,ti)=>`<span class="aw" id="aw-${si}-${ti}">${esc(tok.display)}</span>`).join(" ");
 
   function startAudio(){
     clearInterval(timerId);
@@ -316,8 +340,7 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
   }
   function speakCurrent(){
     stopSpeech();
-    const qn=state.pool[state.idx];
-    speakSequence([...promptParts(qn.prompt),"The correct answer is: "+spokenAnswer(qn)],advanceAudio);
+    speakSegments(state.segments,advanceAudio);
   }
   function advanceAudio(){
     if(!state||state.mode!=="audio"||!state.playing)return;
@@ -339,11 +362,14 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
   function renderAudio(){
     loadVoices();
     const qn=state.pool[state.idx];
+    const segs=buildSegments(qn);state.segments=segs;
+    const promptHTML=segs.map((seg,si)=>seg.area==="prompt"?`<p class="audio-line">${renderSeg(seg,si)}</p>`:"").join("");
+    const ai=segs.findIndex(s=>s.area==="answer");
     app.innerHTML=`<div class="shell"><header class="topbar"><div class="brand">AI-200</div><div class="exam-name">Listen &amp; learn</div><div class="top-spacer"></div><div class="top-count">${state.idx+1} of ${state.pool.length}</div></header>
       <main class="audio-stage"><section class="audio-player">
         <div class="question-meta"><span>${esc(DOMAINS[qn.domain]||"Instructor sample")}</span><span class="pill">${labelType(qn)}</span><span class="audio-state">${state.playing?"▶ Playing":"⏸ Paused"} · randomized loop</span></div>
-        ${promptMarkup(qn.prompt)}
-        <div class="audio-answer"><span class="audio-answer-label">Correct answer</span><p>${esc(spokenAnswer(qn))}</p></div>
+        <div class="prompt audio-prompt">${promptHTML}</div>
+        <div class="audio-answer"><span class="audio-answer-label">Correct answer</span><p class="audio-line">${renderSeg(segs[ai],ai)}</p></div>
         <div class="audio-controls"><button class="secondary" id="aPrev">⏮ Previous</button><button class="primary" id="aPlay">${state.playing?"⏸ Pause":"▶ Play"}</button><button class="secondary" id="aNext">Next ⏭</button><button class="secondary" id="aShuffle">⟳ Reshuffle</button><button class="quiet" id="aExit">Back to menu</button></div>
         <div class="audio-settings"><label>Voice <select id="aVoice" ${audioVoices.length?"":"disabled"}>${audioVoices.length?audioVoices.map((v,i)=>`<option value="${i}" ${v===audioVoice?"selected":""}>${esc(v.name)} (${esc(v.lang)})</option>`).join(""):"<option>System default</option>"}</select></label><label>Speed <select id="aRate">${[0.75,1,1.25,1.5,2].map(r=>`<option value="${r}" ${r===audioRate?"selected":""}>${r}×</option>`).join("")}</select></label></div>
         ${speechReady?"":'<p class="warning">This browser does not support in-browser speech synthesis. Open the app in Microsoft Edge or Chrome to hear questions.</p>'}
