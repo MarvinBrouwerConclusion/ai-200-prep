@@ -36,6 +36,7 @@
           <button class="mode-card" data-mode="case"><strong>Case study drill</strong><span>5 questions · scenario tabs · review before leaving · no separate timer</span></button>
           <button class="mode-card" data-mode="study"><strong>Study mode</strong><span>All ${QUESTION_BANK.length+CASES.reduce((n,c)=>n+c.questions.length,0)+LOCKED_SET.questions.length} questions · no timer · immediate explanations</span></button>
           <button class="mode-card" data-mode="sample"><strong>Instructor sample set</strong><span>All ${INSTRUCTOR_SAMPLE.length} supplied questions · case studies kept together · native controls</span></button>
+          <button class="mode-card" data-mode="audio"><strong>Listen &amp; learn</strong><span>Every question read aloud · prompt + correct answer · randomized loop · hands-free, screen stays awake</span></button>
         </div>
         <div class="source-picker"><label for="examSource"><strong>Official exam flow question source</strong></label><select id="examSource"><option value="mixed">Mixed: curated + instructor sample</option><option value="curated">Curated bank only</option><option value="sample">Instructor sample only</option></select></div>
         <h3>What the simulator reproduces</h3>
@@ -43,9 +44,9 @@
         ${history.length?`<p><strong>Last attempt:</strong> ${history[0].score}/1000 · ${history[0].passed?"Pass":"Not passed"} · ${esc(history[0].date)}</p>`:""}
         <div class="actions"><button id="start" class="primary">Begin session</button></div>
       </div></section></main>`;
-    document.querySelectorAll(".mode-card").forEach(b=>b.onclick=()=>{document.querySelectorAll(".mode-card").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");selectedMode=b.dataset.mode});
+    document.querySelectorAll(".mode-card").forEach(b=>b.onclick=()=>{document.querySelectorAll(".mode-card").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");selectedMode=b.dataset.mode;if(selectedMode==="audio")startAudio()});
     document.getElementById("examSource").onchange=e=>selectedSource=e.target.value;
-    document.getElementById("start").onclick=()=>showInstructions();
+    document.getElementById("start").onclick=()=>selectedMode==="audio"?startAudio():showInstructions();
   }
 
   function showInstructions(){
@@ -247,6 +248,100 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
       <div class="actions"><button class="secondary" id="print">Print results</button><button class="primary" id="again">Start another session</button></div></section>
       <section class="history"><h2>Answer review</h2><p>Open a question to see the correct answer, explanation, and reference.</p>${state.flat.map((x,i)=>`<details class="review-answer"><summary class="${!isGradable(x)?"":isCorrect(x)?"answer-good":"answer-bad"}">Question ${i+1} · ${!isGradable(x)?"Manual review":isCorrect(x)?"Correct":"Incorrect"} · ${esc(DOMAINS[x.domain]||"Instructor sample")}</summary><div class="review-body">${x.type==="sample"?`<div class="sample-pages">${x.questionPages.map(src=>`<img src="${esc(src)}" alt="Question ${i+1}">`).join("")}</div>`:`<p>${esc(x.prompt)}</p>`}<p><strong>Your answer:</strong> ${esc(answerText(x,state.answers[x.id]))}</p>${!isGradable(x)?`<div class="sample-pages answer-pages">${(x.answerPages||[]).map(src=>`<img src="${esc(src)}" alt="Answer ${i+1}">`).join("")}</div><p>${esc(x.explanation)}</p>`:`<p><strong>Correct answer:</strong> ${esc(answerText(x,x.answer))}</p><p>${esc(x.explanation)}</p>`}${referenceMarkup(x)}${state.comments[x.id]?`<p><strong>Your comment:</strong> ${esc(state.comments[x.id])}</p>`:""}</div></details>`).join("")}</section></main>`;
     document.getElementById("again").onclick=welcome;document.getElementById("print").onclick=()=>window.print();
+  }
+
+  const speechReady="speechSynthesis"in window;
+  let audioVoices=[],audioVoice=null,audioRate=parseFloat(localStorage.getItem("ai200-audio-rate"))||1.5,audioToken=0,wakeLock=null;
+  function loadVoices(){
+    if(!speechReady)return;
+    audioVoices=speechSynthesis.getVoices()||[];
+    if((!audioVoice||!audioVoices.includes(audioVoice))&&audioVoices.length){
+      const saved=localStorage.getItem("ai200-audio-voice");
+      audioVoice=(saved&&audioVoices.find(v=>v.name===saved))||audioVoices.find(v=>/^en[-_]/i.test(v.lang))||audioVoices[0];
+    }
+  }
+  if(speechReady)speechSynthesis.addEventListener("voiceschanged",()=>{loadVoices();if(state&&state.mode==="audio")renderAudio()});
+  function stopSpeech(){audioToken++;if(speechReady)try{speechSynthesis.cancel()}catch(e){}}
+  function speakSequence(parts,onDone){
+    if(!speechReady)return;
+    const token=audioToken;let i=0;
+    const step=()=>{
+      if(token!==audioToken)return;
+      if(i>=parts.length){onDone&&onDone();return}
+      const u=new SpeechSynthesisUtterance(parts[i++]);
+      if(audioVoice)u.voice=audioVoice;u.rate=audioRate;u.onend=step;u.onerror=step;
+      speechSynthesis.speak(u);
+    };
+    step();
+  }
+  async function acquireWakeLock(){
+    if(!("wakeLock"in navigator))return;
+    try{wakeLock=await navigator.wakeLock.request("screen");wakeLock.addEventListener("release",()=>{wakeLock=null})}catch(e){}
+  }
+  function releaseWakeLock(){if(wakeLock){try{wakeLock.release()}catch(e){}wakeLock=null}}
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&state&&state.mode==="audio"&&state.playing)acquireWakeLock()});
+
+  function spokenAnswer(qn){
+    const a=qn.answer;
+    if(qn.type==="multi"||(qn.type==="manual"&&qn.choose))return(a||[]).map(i=>qn.options[i]).join("; ");
+    if(qn.type==="order"||qn.type==="drag")return(a||[]).join(", then ");
+    if(qn.type==="matching")return qn.rows.map((row,i)=>`${row}: ${(a||[])[i]}`).join("; ");
+    if(qn.type==="matrix")return qn.rows.map((row,i)=>`${row[0]}: ${(a||[])[i]}`).join("; ");
+    return qn.options[a];
+  }
+  function promptParts(text){return String(text??"").split(/\r?\n+|(?<=[.?!:])\s+/).map(s=>s.trim()).filter(Boolean)}
+
+  function startAudio(){
+    clearInterval(timerId);
+    loadVoices();
+    const all=[...QUESTION_BANK,...CASES.flatMap(c=>c.questions),...LOCKED_SET.questions.map(x=>({...x,locked:false}))];
+    const pool=shuffle(all.map(q=>window.AI200_DATA.prepareQuestion(q,shuffle)).filter(q=>!["sample","manualText"].includes(q.type)));
+    state={mode:"audio",pool,idx:0,playing:true};
+    acquireWakeLock();
+    renderAudio();
+    speakCurrent();
+  }
+  function speakCurrent(){
+    stopSpeech();
+    const qn=state.pool[state.idx];
+    speakSequence([...promptParts(qn.prompt),"The correct answer is: "+spokenAnswer(qn)],advanceAudio);
+  }
+  function advanceAudio(){
+    if(!state||state.mode!=="audio"||!state.playing)return;
+    state.idx++;
+    if(state.idx>=state.pool.length){state.pool=shuffle(state.pool);state.idx=0}
+    renderAudio();speakCurrent();
+  }
+  function audioPlay(){state.playing=true;acquireWakeLock();renderAudio();speakCurrent()}
+  function audioPause(){state.playing=false;stopSpeech();releaseWakeLock();renderAudio()}
+  function audioStep(delta){
+    stopSpeech();
+    state.idx+=delta;
+    if(state.idx>=state.pool.length){state.pool=shuffle(state.pool);state.idx=0}else if(state.idx<0)state.idx=state.pool.length-1;
+    renderAudio();if(state.playing)speakCurrent();
+  }
+  function audioReshuffle(){stopSpeech();state.pool=shuffle(state.pool);state.idx=0;renderAudio();if(state.playing)speakCurrent()}
+  function exitAudio(){stopSpeech();releaseWakeLock();welcome()}
+
+  function renderAudio(){
+    loadVoices();
+    const qn=state.pool[state.idx];
+    app.innerHTML=`<div class="shell"><header class="topbar"><div class="brand">AI-200</div><div class="exam-name">Listen &amp; learn</div><div class="top-spacer"></div><div class="top-count">${state.idx+1} of ${state.pool.length}</div></header>
+      <main class="audio-stage"><section class="audio-player">
+        <div class="question-meta"><span>${esc(DOMAINS[qn.domain]||"Instructor sample")}</span><span class="pill">${labelType(qn)}</span><span class="audio-state">${state.playing?"▶ Playing":"⏸ Paused"} · randomized loop</span></div>
+        ${promptMarkup(qn.prompt)}
+        <div class="audio-answer"><span class="audio-answer-label">Correct answer</span><p>${esc(spokenAnswer(qn))}</p></div>
+        <div class="audio-controls"><button class="secondary" id="aPrev">⏮ Previous</button><button class="primary" id="aPlay">${state.playing?"⏸ Pause":"▶ Play"}</button><button class="secondary" id="aNext">Next ⏭</button><button class="secondary" id="aShuffle">⟳ Reshuffle</button><button class="quiet" id="aExit">Back to menu</button></div>
+        <div class="audio-settings"><label>Voice <select id="aVoice" ${audioVoices.length?"":"disabled"}>${audioVoices.length?audioVoices.map((v,i)=>`<option value="${i}" ${v===audioVoice?"selected":""}>${esc(v.name)} (${esc(v.lang)})</option>`).join(""):"<option>System default</option>"}</select></label><label>Speed <select id="aRate">${[0.75,1,1.25,1.5,2].map(r=>`<option value="${r}" ${r===audioRate?"selected":""}>${r}×</option>`).join("")}</select></label></div>
+        ${speechReady?"":'<p class="warning">This browser does not support in-browser speech synthesis. Open the app in Microsoft Edge or Chrome to hear questions.</p>'}
+      </section></main></div>`;
+    document.getElementById("aPlay").onclick=()=>state.playing?audioPause():audioPlay();
+    document.getElementById("aPrev").onclick=()=>audioStep(-1);
+    document.getElementById("aNext").onclick=()=>audioStep(1);
+    document.getElementById("aShuffle").onclick=audioReshuffle;
+    document.getElementById("aExit").onclick=exitAudio;
+    document.getElementById("aVoice").onchange=e=>{audioVoice=audioVoices[+e.target.value]||audioVoice;if(audioVoice)localStorage.setItem("ai200-audio-voice",audioVoice.name);if(state.playing)speakCurrent()};
+    document.getElementById("aRate").onchange=e=>{audioRate=+e.target.value;localStorage.setItem("ai200-audio-rate",audioRate);if(state.playing)speakCurrent()};
   }
 
   welcome();
