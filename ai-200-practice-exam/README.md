@@ -13,6 +13,7 @@ English-language practice application for AI-200. Open `dist/index.html` in a br
 - Study mode with immediate explanations
 - Persistent green/red question-number status in Study mode after an answer is checked or left with Next
 - Built-in full-screen supplied-scenario viewer with a persistent case-study name, readable structured text, and a cropped original-image view
+- Source-verified case membership: only the 19 instructor questions that show the VCE Overview control are attached to Fabrikam or Proseware
 - Single choice, multiple response, ordering, and locked Yes/No problem-solution items
 - Review flags, question comments, section review, timed-session breaks, and Microsoft Learn links
 - Estimated 0-1000 practice score and performance by domain

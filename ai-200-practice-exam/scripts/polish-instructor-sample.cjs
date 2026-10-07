@@ -1007,6 +1007,30 @@ const scenarioByContext = {
   'context-170.png': prosewareScenario
 };
 
+// The source VCE export displays an Overview control only on these 19 case-study
+// questions. Do not carry a previously seen context page into ordinary questions.
+const caseContextByNumber = new Map([
+  [2, 'context-002.png'],
+  [4, 'context-002.png'],
+  [10, 'context-011.png'],
+  [25, 'context-002.png'],
+  [49, 'context-002.png'],
+  [50, 'context-052.png'],
+  [62, 'context-002.png'],
+  [70, 'context-074.png'],
+  [75, 'context-074.png'],
+  [104, 'context-002.png'],
+  [105, 'context-002.png'],
+  [125, 'context-052.png'],
+  [134, 'context-052.png'],
+  [149, 'context-002.png'],
+  [162, 'context-168.png'],
+  [163, 'context-170.png'],
+  [164, 'context-170.png'],
+  [165, 'context-168.png'],
+  [172, 'context-170.png']
+]);
+
 for (const question of sample.questions) {
   question.prompt = cleanPrompt(promptOverrides[question.id] || question.prompt, question);
   if (optionOverrides[question.id]) {
@@ -1022,7 +1046,10 @@ for (const question of sample.questions) {
     question.explanation = cleanExplanation(explanationOverrides[question.id] || fallbackExplanation(question));
   }
   if (question.id === 'INS143') delete question.locked;
-  if (question.contextPage) question.scenarioText = scenarioByContext[path.basename(question.contextPage)] || null;
+  const contextName = caseContextByNumber.get(question.number);
+  question.contextPage = contextName ? `instructor-sample/contexts/${contextName}` : null;
+  if (contextName) question.scenarioText = scenarioByContext[contextName];
+  else delete question.scenarioText;
 }
 
 fs.writeFileSync(target, `window.AI200_INSTRUCTOR_SAMPLE=${JSON.stringify(sample)};\n`);

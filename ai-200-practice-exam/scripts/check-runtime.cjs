@@ -80,7 +80,11 @@ for (const engine of ['dist', 'inline']) {
         }
         assert.ok(questions.filter(q=>q.code).length>=15,'code-based questions include native code snippets');
         const scenarios = questions.filter(q=>q.contextPage);
-        assert.ok(scenarios.length>150,'supplied scenarios remain linked to their questions');
+        assert.equal(scenarios.length,19,'only the 19 questions with an Overview control in the source are linked to a case study');
+        assert.equal(scenarios.map(q=>q.number).join(','),'2,4,25,49,62,104,105,149,162,165,10,50,70,75,125,134,163,164,172','case questions retain their verified source membership and grouped order');
+        assert.equal(scenarios.filter(q=>q.scenarioText.title==='Fabrikam retail analytics platform').length,10,'Fabrikam contains its 10 verified questions');
+        assert.equal(scenarios.filter(q=>q.scenarioText.title==='Proseware knowledge management platform').length,9,'Proseware contains its 9 verified questions');
+        assert.ok(!questions.find(q=>q.id==='INS003').scenarioText&&!questions.find(q=>q.id==='INS020').scenarioText,'ordinary App Configuration and Service Bus questions are not mislabeled as case questions');
         assert.equal(new Set(scenarios.map(q=>q.contextPage)).size,6,'all six supplied scenario images remain available');
         for (const imagePath of new Set(scenarios.map(q=>q.contextPage))) {
           const png=fs.readFileSync(path.join(root,'dist',imagePath));
