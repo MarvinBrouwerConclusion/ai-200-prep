@@ -279,11 +279,11 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
   // Builds the exact spoken string (with respellings) plus display tokens mapped to their spoken char ranges.
   // Backtick-delimited markdown code is stripped from speech and flagged so it renders as inline code.
   function buildSpokenTokens(text){
-    const tokens=[];let spoken="",last=0,m,pending="";
+    const tokens=[];let spoken="",last=0,m,pending="",inCode=false;
     PRONUNCIATION_RE.lastIndex=0;
     const push=(display,spokenText,code)=>{const start=spoken.length;spoken+=spokenText;tokens.push({display,start,code,pre:pending});pending=""};
-    const addLiteral=lit=>{lit.split("`").forEach((seg,gi)=>{const code=gi%2===1,re=/(\s+)|(\S+)/g;let t;while((t=re.exec(seg))){if(t[1]){pending+=t[1];spoken+=t[1]}else{push(t[2],t[2],code)}}})};
-    while((m=PRONUNCIATION_RE.exec(text))){addLiteral(text.slice(last,m.index));push(m[0],PRONUNCIATION_MAP[m[0].toLowerCase()],false);last=m.index+m[0].length}
+    const addLiteral=lit=>{lit.split("`").forEach((seg,gi)=>{if(gi>0)inCode=!inCode;const re=/(\s+)|(\S+)/g;let t;while((t=re.exec(seg))){if(t[1]){pending+=t[1];spoken+=t[1]}else{push(t[2],t[2],inCode)}}})};
+    while((m=PRONUNCIATION_RE.exec(text))){addLiteral(text.slice(last,m.index));push(m[0],PRONUNCIATION_MAP[m[0].toLowerCase()],inCode);last=m.index+m[0].length}
     addLiteral(text.slice(last));
     return {spoken,tokens};
   }
@@ -328,7 +328,17 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
     segs.push({area:"answer",...buildSpokenTokens(spokenAnswer(qn))});
     return segs;
   }
-  const renderSeg=(seg,si)=>seg.tokens.map((tok,ti)=>`${esc(tok.pre||"")}<span class="aw${tok.code?" code":""}" id="aw-${si}-${ti}">${esc(tok.display)}</span>`).join("");
+  // Groups consecutive backtick-code words into one <code> box while keeping per-word spans for highlighting.
+  const renderSeg=(seg,si)=>{
+    let html="",inCode=false;
+    seg.tokens.forEach((tok,ti)=>{
+      const span=`<span class="aw" id="aw-${si}-${ti}">${esc(tok.display)}</span>`,pre=esc(tok.pre||"");
+      if(tok.code){if(!inCode){html+=pre+'<code class="codewrap">'+span;inCode=true}else{html+=pre+span}}
+      else{if(inCode){html+="</code>";inCode=false}html+=pre+span}
+    });
+    if(inCode)html+="</code>";
+    return html;
+  };
 
   function startAudio(){
     clearInterval(timerId);
