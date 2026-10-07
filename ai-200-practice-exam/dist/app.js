@@ -258,7 +258,7 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
     "AKS":"A K S","ACR":"A C R","ACA":"A C A","AAD":"A A D","RBAC":"are-back","ABAC":"ay-back",
     "PostgreSQL":"Postgres Q L","psql":"P S Q L","pgvector":"P G vector","PgBouncer":"P G Bouncer",
     "nginx":"engine X","YAML":"yam-ul","JSON":"jason","SKU":"skew","SKUs":"skews","Redis":"reddiss",
-    "gRPC":"G R P C","RRF":"R R F","Qdrant":"Q-drant","Cosmos DB":"Cosmos D B","NoSQL":"no-sequel",
+    "gRPC":"G R P C","RRF":"R R F","Qdrant":"Q-drant","Cosmos DB":"Cosmos D B","NoSQL":"no-sequel","KEDA":"kee dah",
     "OIDC":"O I D C","JWT":"J W T","PaaS":"pass","SaaS":"sass","IaaS":"i-a-a-s","TTL":"T T L",
     "az":"A Z","CLI":"C L I","SDK":"S D K","API":"A P I","PVC":"P V C","CORS":"cores",
     "dataset":"data set","datasets":"data sets","containerapp":"container app","containerapps":"container apps"
