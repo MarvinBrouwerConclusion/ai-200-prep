@@ -264,7 +264,8 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
     "dataset":"data set","datasets":"data sets","containerapp":"container app","containerapps":"container apps",
     "HNSW":"H N S W","KQL":"K Q L","DLQ":"D L Q","RUs":"R Us","RU":"R U","TLS":"T L S","DNS":"D N S","TCP":"T C P","URI":"U R I","AMQP":"A M Q P","SAS":"S A S","LLM":"L L M","UUID":"U U I D","CNCF":"C N C F",
     "DiskANN":"disk A N N","ANN":"A N N","PromQL":"prom Q L","L2":"L two","W3C":"W three C","B3":"B three","P95":"P ninety five",
-    "XACK":"X ack","XADD":"X add","XREAD":"X read","XCLAIM":"X claim","LPUSH":"L push","RPOP":"R pop"
+    "XACK":"X ack","XADD":"X add","XREAD":"X read","XCLAIM":"X claim","LPUSH":"L push","RPOP":"R pop",
+    "correlation_id":"correlation ID","operation_id":"operation ID","tenant_id":"tenant ID","category_id":"category ID","in_progress":"in progress"
   };
   const PRONUNCIATION_MAP={};Object.keys(PRONUNCIATIONS).forEach(k=>PRONUNCIATION_MAP[k.toLowerCase()]=PRONUNCIATIONS[k]);
   const PRONUNCIATION_RE=new RegExp("\\b("+Object.keys(PRONUNCIATIONS).sort((a,b)=>b.length-a.length).map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")\\b","gi");
