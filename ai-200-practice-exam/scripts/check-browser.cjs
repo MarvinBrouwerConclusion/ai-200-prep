@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const http = require('node:http');
-const { spawn } = require('node:child_process');
+const { spawn, spawnSync } = require('node:child_process');
 
 const root = path.resolve(__dirname, '..');
 const screenshotPath = path.join(root, 'docs', 'screenshots', 'results-screen.png');
@@ -154,10 +154,17 @@ async function main() {
 }
 
 main().finally(async () => {
-  child.kill();
+  if (process.platform === 'win32') {
+    spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });
+  } else {
+    child.kill('SIGKILL');
+  }
   await new Promise(resolve => server.close(resolve));
-  await delay(100);
-  fs.rmSync(profile, { recursive: true, force: true });
+  await delay(250);
+  const resolvedProfile = path.resolve(profile);
+  const resolvedTemp = path.resolve(os.tmpdir());
+  assert.ok(resolvedProfile.startsWith(resolvedTemp + path.sep), 'Temporary browser profile escaped the system temp directory.');
+  fs.rmSync(resolvedProfile, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
 }).catch(error => {
   console.error(error.stack || error);
   process.exitCode = 1;
