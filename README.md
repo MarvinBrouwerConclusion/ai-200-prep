@@ -32,6 +32,10 @@ Open `ai-200-practice-exam/dist/index.html` lokaal in een browser om de simulato
 
 ![AI-200 supplied scenario popup](ai-200-practice-exam/docs/screenshots/scenario-popup.png)
 
+### Score en antwoordcontrole
+
+![AI-200 score en antwoordcontrole](ai-200-practice-exam/docs/screenshots/results-screen.png)
+
 ## Privacy en AVG
 
 - De repository bevat geen namen van cursisten, privé-e-mailadressen, telefoonnummers, labaccounts, tijdelijke toegangscodes of ingevulde persoonlijke formulieren.
