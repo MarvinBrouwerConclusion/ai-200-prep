@@ -323,7 +323,9 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
   }
   function promptParts(text){return String(text??"").split(/\r?\n+|(?<=[.?!:])\s+/).map(s=>s.trim()).filter(Boolean)}
   function buildSegments(qn){
-    const segs=promptParts(qn.prompt).map(t=>({area:"prompt",...buildSpokenTokens(t)}));
+    const segs=[];
+    if(qn.scenario)promptParts(qn.scenario).forEach(t=>segs.push({area:"scenario",...buildSpokenTokens(t)}));
+    promptParts(qn.prompt).forEach(t=>segs.push({area:"prompt",...buildSpokenTokens(t)}));
     segs.push({area:"label",...buildSpokenTokens("The correct answer is:")});
     segs.push({area:"answer",...buildSpokenTokens(spokenAnswer(qn))});
     return segs;
@@ -343,7 +345,7 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
   function startAudio(){
     clearInterval(timerId);
     loadVoices();
-    const all=[...QUESTION_BANK,...CASES.flatMap(c=>c.questions),...LOCKED_SET.questions.map(x=>({...x,locked:false}))];
+    const all=[...QUESTION_BANK,...CASES.flatMap(c=>c.questions),...LOCKED_SET.questions.map(x=>({...x,locked:false,scenario:LOCKED_SET.scenario}))];
     const pool=shuffle(all.map(q=>window.AI200_DATA.prepareQuestion(q,shuffle)).filter(q=>!["sample","manualText"].includes(q.type)));
     state={mode:"audio",pool,idx:0,playing:true};
     acquireWakeLock();
@@ -375,11 +377,13 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
     loadVoices();
     const qn=state.pool[state.idx];
     const segs=buildSegments(qn);state.segments=segs;
+    const scenarioHTML=segs.map((seg,si)=>seg.area==="scenario"?`<p class="audio-line">${renderSeg(seg,si)}</p>`:"").join("");
     const promptHTML=segs.map((seg,si)=>seg.area==="prompt"?`<p class="audio-line">${renderSeg(seg,si)}</p>`:"").join("");
     const ai=segs.findIndex(s=>s.area==="answer");
     app.innerHTML=`<div class="shell"><header class="topbar"><div class="brand">AI-200</div><div class="exam-name">Listen &amp; learn</div><div class="top-spacer"></div><div class="top-count">${state.idx+1} of ${state.pool.length}</div></header>
       <main class="audio-stage"><section class="audio-player">
         <div class="question-meta"><span>${esc(DOMAINS[qn.domain]||"Instructor sample")}</span><span class="pill">${labelType(qn)}</span><span class="audio-state">${state.playing?"▶ Playing":"⏸ Paused"} · randomized loop</span></div>
+        ${scenarioHTML?`<div class="audio-scenario"><span class="audio-answer-label">Scenario</span>${scenarioHTML}</div>`:""}
         <div class="prompt audio-prompt">${promptHTML}</div>
         <div class="audio-answer"><span class="audio-answer-label">Correct answer</span><p class="audio-line">${renderSeg(segs[ai],ai)}</p></div>
         <div class="audio-controls"><button class="secondary" id="aPrev">⏮ Previous</button><button class="primary" id="aPlay">${state.playing?"⏸ Pause":"▶ Play"}</button><button class="secondary" id="aNext">Next ⏭</button><button class="secondary" id="aShuffle">⟳ Reshuffle</button><button class="quiet" id="aExit">Back to menu</button></div>
