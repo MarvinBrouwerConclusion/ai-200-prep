@@ -19,6 +19,10 @@ Microsoft vermeldt op 6 oktober 2026 dat de officiële AI-200 Practice Assessmen
 - Officiële cursus met negen leerpaden: https://learn.microsoft.com/en-us/training/courses/ai-200t00
 - Officiële examenomgeving zonder AI-200-inhoudsvragen: https://aka.ms/examdemo
 
+## Door de docent verstrekte voorbeeldset
+
+De aangeleverde set bevat 174 voorbeeldvragen. De set is apart selecteerbaar in de oefenapp en wordt ook gemengd in `Official exam flow`. De oorspronkelijke Word-bestanden en antwoordschermen worden niet gepubliceerd. Alle 174 vragen zijn na visuele controle omgezet naar native tekst, bediening en automatische beoordeling. De 48 oorspronkelijke hot-area-vragen gebruiken selectierasters en waar nodig kopieerbare codeblokken. Persoonsgegevens en de oorspronkelijke overdrachtslink zijn niet opgenomen.
+
 ## Gecontroleerde gratis aantallen
 
 | Bron | Gratis beschikbaar | Gebruik |

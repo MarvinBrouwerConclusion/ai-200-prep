@@ -22,12 +22,15 @@ Map: `ai-200-practice-exam`
 
 Lokale start: open `ai-200-practice-exam/dist/index.html`.
 
-De Engelstalige applicatie bevat 263 gecontroleerde vragen en vier modi. Daarvan komen 133 vragen rechtstreeks uit de openbare moduletoetsen van alle 27 modules in de officiële AI-200-cursus:
+De Engelstalige applicatie bevat 263 gecontroleerde vragen plus een afzonderlijke docentenset van 174 voorbeeldvragen. Daarvan komen 133 vragen rechtstreeks uit de openbare moduletoetsen van alle 27 modules in de officiële AI-200-cursus:
 
-1. **Full simulation:** 50 vragen, 100 minuten, case study en een vastgezette Yes/No-set. Dit simuleert het officiële profiel zonder lab.
+1. **Official exam flow:** 50 vragen, 100 minuten, case study en een vastgezette Yes/No-set. De standaardbron mengt 15 docentenvragen met de gecontroleerde bank. De bronkeuze kan ook één bank afdwingen.
 2. **Quick assessment:** 20 vragen, 40 minuten.
 3. **Case study drill:** één casus met tabbladen en vijf vragen, zonder aparte timer.
 4. **Study mode:** alle vragen, geen timer en directe uitleg.
+5. **Instructor sample:** alle 174 aangeleverde voorbeeldvragen als aparte set.
+
+Alle 174 docentvragen worden in de eigen huisstijl weergegeven en kunnen automatisch worden nagekeken. Keuzevragen, multiple response, matching, build lists en drag-and-drop gebruiken native bediening. De 48 oorspronkelijke hot-area- en configuratievragen gebruiken native selectierasters; code staat in kopieerbare codeblokken. De laatste antwoordschermen zijn visueel dubbelgecontroleerd en daarna vervangen door native antwoordopties.
 
 ### Hoe de casus werkt
 
@@ -42,8 +45,8 @@ De app bevat twee fictieve casussen: **Northwind Research** en **Fabrikam Claims
 ### Overeenkomst en beperkingen
 
 - De plaatsing van de casus wordt in de volledige simulatie afgewisseld: vóór of na de algemene vragen.
-- De simulator ondersteunt single choice, multiple response, build list, case studies en niet-terugkeerbare Yes/No-vragen.
-- Microsoft kan daarnaast drag-and-drop, hot-area-vragen, meerdere casussen en mogelijk een praktijklab aanbieden. De exacte samenstelling wordt pas op het introductiescherm van het echte examen getoond.
+- De simulator ondersteunt single choice, multiple response, matching, build list, drag-and-drop, case studies en niet-terugkeerbare Yes/No-vragen.
+- Microsoft kan daarnaast hot-area-vragen, meerdere casussen en mogelijk een praktijklab aanbieden. De exacte samenstelling wordt pas op het introductiescherm van het echte examen getoond.
 - De visuele vorm is een benadering van de Microsoft/Pearson-interface. De officiële sandbox is de beste bron voor het exacte bedieningsmodel: https://aka.ms/examdemo
 
 De volledige simulatie gebruikt de officiële domeinwegingen als benadering. De score van 0-1000 is een oefenindicatie, omdat Microsoft de echte omzetting van ruwe punten naar schaalscore niet publiceert.

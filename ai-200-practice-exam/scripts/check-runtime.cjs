@@ -8,7 +8,8 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\
 // Run session startup, feedback and results with a small in-memory DOM facade.
 for (const engine of ['dist', 'inline']) {
   for (const randomValue of [0.1, 0.9]) {
-    for (const [mode, total] of [['exam',50],['quick',20],['case',5],['study',263]]) {
+    const modes = engine === 'dist' ? [['exam',50],['quick',20],['case',5],['study',263],['sample',174]] : [['exam',50],['quick',20],['case',5],['study',263]];
+    for (const [mode, total] of modes) {
       const elements = new Map();
       const element = id => {
         if (!elements.has(id)) elements.set(id, {innerHTML:'', querySelectorAll:()=>[], style:{}});
@@ -24,10 +25,11 @@ for (const engine of ['dist', 'inline']) {
         setInterval:()=>1, clearInterval:()=>{}
       };
       vm.runInNewContext(read('dist/questions.js'), context);
+      if (engine === 'dist') vm.runInNewContext(read('dist/instructor-sample.js'), context);
       let script;
       if (engine === 'dist') {
         const original = read('dist/app.js');
-        script = original.replace(/\n\s*welcome\(\);\s*\}\)\(\);\s*$/, '\nwindow.__review={start:mode=>{selectedMode=mode;startSession()},state:()=>state,feedback:feedbackMarkup,finish,render:renderQuestion,next};welcome();\n})();');
+        script = original.replace(/\n\s*welcome\(\);\s*\}\)\(\);\s*$/, '\nwindow.__review={start:(mode,source)=>{selectedMode=mode;if(source)selectedSource=source;startSession()},state:()=>state,feedback:feedbackMarkup,options:optionMarkup,answered:isAnswered,correct:isCorrect,finish,render:renderQuestion,next};welcome();\n})();');
         assert.notEqual(script, original);
       } else {
         const original = read('inline/runtime.part').replace(/<\/script>\s*$/, '');
@@ -40,7 +42,66 @@ for (const engine of ['dist', 'inline']) {
       const state = api.state();
       const questions = state.flat || state.qs;
       assert.equal(questions.length, total, `${engine}/${mode}`);
-      if (mode === 'exam') {
+      if (engine === 'dist') assert.equal(element('app').innerHTML.includes('Take a break'),['exam','quick'].includes(mode),`${mode}: break control matches timed-session behavior`);
+      if (engine === 'dist' && mode === 'exam') {
+        assert.equal(questions.filter(q=>q.id.startsWith('INS')).length, 15, 'mixed official flow contains 15 instructor questions');
+      }
+      if (engine === 'dist' && mode === 'sample') {
+        const typeCounts = questions.reduce((counts,q)=>((counts[q.type]=(counts[q.type]||0)+1),counts),{});
+        const ocrDebris = /(?:\n\s*Proposed\s*\n|\bapi'|\bretums\b|\bKOL\b|\bdese\b|\broling\b|\bVaut\b|\bforthe\b|\batleast\b|\battempis\b|\bupto\b|\bina\b|\bNo n\b|\brequest_ount\b|\bDefaultazure\b|\bvoult\b|\bthe\. change\b|solution NOTE|requirements Which|configuration Which|processing Authentication|To answer, move|Show List|\uFFFD)/i;
+        const placeholderExplanation = /^(?:Compare the answer|Arrange the choices|Review the supplied)/i;
+        assert.equal(typeCounts.sample||0, 0, 'no instructor question depends on a full question screenshot');
+        assert.equal(typeCounts.matrix, 48, 'all former visual answer areas use native matrix controls');
+        assert.equal(questions.length, 174, 'all instructor questions are natively rendered');
+        assert.equal(questions.filter(q=>!['manual','manualText'].includes(q.type)).length,174,'all 174 instructor questions are automatically gradable');
+        for (const q of questions) {
+          assert.ok(!ocrDebris.test(JSON.stringify(q)), `${q.id}: known OCR debris must be removed`);
+          assert.ok(!placeholderExplanation.test(q.explanation||''), `${q.id}: explanation must be useful`);
+          if (['single','multi'].includes(q.type)) {
+            for (const answer of (Array.isArray(q.answer)?q.answer:[q.answer])) assert.ok(Number.isInteger(answer)&&answer>=0&&answer<q.options.length,`${q.id}: answer index exists`);
+          }
+          if (['order','drag'].includes(q.type)) for (const answer of q.answer) assert.ok(q.options.includes(answer),`${q.id}: ordered answer exists in choices`);
+          if (q.type==='matching') for (const answer of q.answer) assert.ok(q.options.includes(answer),`${q.id}: matching answer exists in choices`);
+        }
+        for (const q of questions.filter(q=>q.type==='matrix')) {
+          assert.equal(q.rows.length,q.answer.length,`${q.id}: every matrix row has an answer`);
+          q.rows.forEach((row,index)=>assert.ok(row[1].includes(q.answer[index]),`${q.id}: answer ${index+1} occurs in its native select`));
+        }
+        assert.ok(questions.filter(q=>q.code).length>=15,'code-based questions include native code snippets');
+        const scenarios = questions.filter(q=>q.contextPage);
+        assert.ok(scenarios.length>150,'supplied scenarios remain linked to their questions');
+        assert.equal(new Set(scenarios.map(q=>q.contextPage)).size,6,'all six supplied scenario images remain available');
+        for (const imagePath of new Set(scenarios.map(q=>q.contextPage))) {
+          const png=fs.readFileSync(path.join(root,'dist',imagePath));
+          assert.equal(png.readUInt32BE(16),1920,`${imagePath}: cropped image width`);
+          assert.equal(png.readUInt32BE(20),824,`${imagePath}: Avanset header and footer are cropped`);
+        }
+        assert.ok(scenarios.every(q=>q.scenarioText&&q.scenarioText.sections.length>=4),'every supplied scenario has readable structured text');
+        assert.equal(new Set(scenarios.map(q=>q.scenarioText.title)).size,2,'the two supplied case studies are transcribed once and reused');
+        state.current=questions.findIndex(q=>q.prompt.includes('Requirements:\n-'));api.render();
+        const sampleMarkup = element('app').innerHTML;
+        assert.ok(sampleMarkup.includes('prompt-heading')&&sampleMarkup.includes('<ul>'),'structured prompts render headings and semantic lists');
+        state.current=questions.indexOf(scenarios[0]);api.render();
+        const scenarioLaunchMarkup = element('app').innerHTML;
+        assert.ok(scenarioLaunchMarkup.includes('scenario-launch'),'scenario questions show a large popup launcher');
+        assert.ok(scenarioLaunchMarkup.includes('Readable text and original image'),'launcher describes both scenario views');
+        assert.ok(read('dist/app.js').includes('document.createElement("dialog")')&&read('dist/app.js').includes('dialog.showModal()'),'scenario viewer uses a native modal dialog');
+        assert.equal(questions.find(q=>q.id==='INS129').answer[0],"Initialize the application's TracerProvider for tracing",'OpenTelemetry pipeline starts with the tracer provider');
+        const drag = questions.find(q=>q.type==='drag');
+        const matching = questions.find(q=>q.type==='matching');
+        const matrix = questions.find(q=>q.type==='matrix'&&q.code);
+        assert.ok(api.options(drag).includes('data-drop-slot'));
+        assert.ok(api.options(drag).includes('data-drag-choice'));
+        assert.ok(api.options(matching).includes('data-match-index'));
+        assert.ok(api.options(matrix).includes('data-matrix-index'));
+        state.answers[drag.id]=[...drag.answer];
+        state.answers[matching.id]=[...matching.answer];
+        state.answers[matrix.id]=[...matrix.answer];
+        assert.ok(api.answered(drag)&&api.correct(drag));
+        assert.ok(api.answered(matching)&&api.correct(matching));
+        assert.ok(api.answered(matrix)&&api.correct(matrix));
+      }
+      if (mode === 'exam' && engine === 'inline') {
         for (const [domain,count] of Object.entries(context.window.AI200_DATA.EXAM_DOMAIN_COUNTS)) {
           assert.equal(questions.filter(q=>q.domain===domain).length, count);
         }
@@ -78,7 +139,11 @@ for (const engine of ['dist', 'inline']) {
       assert.ok(markup.includes('Answer review'));
       assert.ok(!markup.includes('{state.comments'));
       assert.ok(!/\}\/div>|\}\/details>/.test(markup));
+      if (engine === 'dist' && mode === 'exam' && randomValue === 0.1) {
+        api.start('exam','sample');
+        assert.equal(api.state().flat.filter(q=>q.id.startsWith('INS')).length,41,'instructor-only official flow contains 41 instructor questions plus case and locked sections');
+      }
     }
   }
 }
-console.log('PASS: both runtimes start and score all four modes; Study mode keeps incorrect answers marked; both cases retain domain counts; adapted-source feedback and result markup checked.');
+console.log('PASS: both runtimes start and score every mode; all 174 instructor questions render natively; matrix, code, drag, matching, Study mode state, domain counts, feedback, and results checked.');

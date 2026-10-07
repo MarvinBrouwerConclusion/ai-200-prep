@@ -1712,6 +1712,7 @@ function selectExamQuestions(caseStudy,shuffle){
 
 // Randomize choices once per session, preserving answer indexes and source data.
 function prepareQuestion(question,shuffle){
+  if(question.preserveOrder)return {...question};
   if(question.type!==&quot;single&quot;&amp;&amp;question.type!==&quot;multi&quot;)return {...question};
   const indexes=shuffle(question.options.map((_,index)=&gt;index));
   const remap=index=&gt;indexes.indexOf(index);

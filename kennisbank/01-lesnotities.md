@@ -214,6 +214,89 @@
 - Ezelsbrug: **ADLS = magazijn; Databricks = fabriek en laboratorium.**
 - **Redis:** snelle in-memory datastore, vaak gebruikt als cache, session store en voor tijdelijke status. De actuele beheerde Azure-dienst is **Azure Managed Redis**.
 - Let op: Azure Cache for Redis wordt uitgefaseerd; Microsoft adviseert migratie naar Azure Managed Redis. Controleer actuele deadlines voordat je een ontwerp maakt.
+
+### Azure Managed Redis: cachingstrategieën en tiers
+
+**Veelvoorkomende toepassingen:**
+- **Data cache:** veelgebruikte database- of API-resultaten tijdelijk bewaren om latency en belasting op de brondienst te verlagen.
+- **Content cache:** gegenereerde of veel opgevraagde content bewaren, zoals paginafragmenten en API-responses.
+- **Session store:** gebruikerssessies centraal bewaren, zodat meerdere app-instances dezelfde sessiestatus kunnen gebruiken.
+
+**Tierkeuze:**
+- **Memory Optimized (8:1):** veel geheugen per vCPU; geschikt voor grote caches waarbij maximale throughput minder belangrijk is.
+- **Balanced (4:1):** evenwicht tussen geheugen en compute; standaardkeuze voor algemene caching en session stores.
+- **Compute Optimized (2:1):** meer rekenkracht en shards per GB; voor hoge requestvolumes, zware Redis-commando's en maximale throughput.
+- **Flash Optimized:** RAM gecombineerd met NVMe voor zeer grote datasets met een duidelijke hot/cold-verdeling. Goedkoper per GB, maar cold data kan meer latency geven.
+
+**Examenkeuze:** geheugen is de bottleneck → Memory Optimized; algemene workload → Balanced; CPU/throughput is de bottleneck → Compute Optimized; honderden GB's tot TB's met vooral een hete subset → Flash Optimized.
+
+Let op: Flash Optimized ondersteunt onder andere geen RediSearch/vector search en geen active geo-replication. Schalen tussen Flash Optimized en een in-memory tier kan niet rechtstreeks.
+
+Bron: https://learn.microsoft.com/en-us/azure/redis/plan-tiers-and-capacity
+
+**Client library en clustering:**
+- **`redis-py`** is de gebruikelijke Python-client (`pip install redis`). Gebruik connection pooling in plaats van voor iedere opdracht een nieuwe TCP/TLS-verbinding te openen.
+- Iedere Azure Managed Redis-instance gebruikt intern clustering en kan data over meerdere **shards** verdelen.
+- Bij **Enterprise clustering** maakt een proxy de cache voor de client grotendeels zichtbaar als één niet-geclusterde endpoint. De client hoeft daardoor niet zelf het Redis Cluster-protocol en de shardroutering af te handelen.
+- Enterprise clustering is vereist voor **RediSearch**, en daarmee voor Redis-vector search. Er blijven beperkingen bestaan voor bepaalde multi-key-opdrachten.
+- Bij **OSS clustering** maakt een cluster-aware client rechtstreeks verbinding met shards. Dit levert doorgaans de beste latency en throughput, maar de clientbibliotheek moet de Redis Cluster API ondersteunen.
+- De clustering policy wordt tijdens het aanmaken gekozen en kan daarna doorgaans niet worden gewijzigd.
+
+Bron: https://learn.microsoft.com/en-us/azure/redis/architecture
+
+**Poorten:**
+- **Azure Managed Redis:** verbind met het endpoint op poort **10000**. Deze poort wordt voor TLS en, indien ingeschakeld, niet-TLS gebruikt.
+- Bij **OSS clustering** begint de verbinding op 10000. De client ontdekt daarna automatisch shardpoorten in de **85xx-reeks**; deze niet hardcoderen.
+- **6379** is de standaardpoort van gewone/community Redis.
+- Bij de oudere **Azure Cache for Redis** waren **6380 voor TLS** en **6379 voor niet-TLS** gebruikelijk. Verwar deze dienst niet met Azure Managed Redis.
+
+**Azure Managed Redis versus Azure Cache for Redis:**
+
+| Onderdeel | Azure Managed Redis | Azure Cache for Redis |
+|---|---|---|
+| Rol | Actuele dienst en standaardkeuze voor nieuwe ontwerpen | Voorganger die wordt uitgefaseerd |
+| Basis | Redis Enterprise-stack, beheerd door Microsoft | Basic/Standard/Premium gebruiken community Redis; de oude Enterprise-tiers gebruiken Redis Enterprise |
+| Redis-versie | **7.4** | **6** voor Basic/Standard/Premium |
+| Publieke DNS | Eindigt op `<regio>.redis.azure.net` | Eindigt op `.redis.cache.windows.net` |
+| Clientpoort | **10000** voor TLS en eventueel niet-TLS | **6380** voor TLS; **6379** zonder TLS |
+| Shardpoorten | Bij OSS-clustering ontdekt de client dynamische **85xx**-poorten | Bij clustering gebruikte de client afzonderlijke 13xxx/15xxx-poorten |
+| Architectuur | Alle instances gebruiken intern shards; meerdere Redis-processen kunnen parallel over nodes draaien | Basic/Standard/Premium gebruiken traditioneel één Redis-proces per node; clustering was afhankelijk van tier/configuratie |
+| Cluster policy | **OSS**, **Enterprise** of beperkt **Non-clustered** | Vooral OSS-clustering bij Basic/Standard/Premium; de oude Enterprise-tiers boden OSS en Enterprise |
+| Tiers | Memory Optimized, Balanced, Compute Optimized en Flash Optimized | Basic, Standard, Premium, Enterprise en Enterprise Flash |
+| Vector search | RediSearch inschakelen bij creatie; vereist Enterprise clustering en een in-memory tier | Alleen ondersteund binnen geschikte oude Enterprise-configuraties |
+| Authenticatie | Microsoft Entra ID wordt aanbevolen; access keys zijn ook mogelijk | Access keys waren gebruikelijk; Entra-ondersteuning verschilde per tier en configuratie |
+| Migratie | Doelplatform | Hostnaam, poort en mogelijk clustering/clientconfiguratie aanpassen; applicatiecommando's blijven meestal compatibel |
+
+**Lifecycle (stand oktober 2026):**
+- Nieuwe klanten kunnen sinds **1 april 2026** geen Basic-, Standard- of Premium-cache meer maken. Bestaande klanten kunnen dat voorlopig nog wel.
+- De oude Enterprise- en Enterprise Flash-instances worden uiterlijk **31 maart 2027** naar Azure Managed Redis gemigreerd.
+- Basic, Standard en Premium worden op **30 september 2028** beëindigd. Controleer deze data opnieuw wanneer je ze praktisch nodig hebt.
+
+**Examenherkenning:**
+- Een **nieuwe** beheerde Redis-oplossing → normaal **Azure Managed Redis**.
+- Poort **10000**, Redis 7.4 of DNS met `.redis.azure.net` → Azure Managed Redis.
+- Poort **6380**, Basic/Standard/Premium, Redis 6 of `.redis.cache.windows.net` → oude Azure Cache for Redis.
+- Vector search → RediSearch tijdens provisioning inschakelen, **Enterprise clustering** kiezen en geen Flash Optimized gebruiken.
+- Maximale Redis-throughput en de client ondersteunt Redis Cluster → meestal **OSS clustering**.
+- Eenvoudige clientcompatibiliteit, multi-key-gedrag of RediSearch nodig → **Enterprise clustering** beoordelen.
+
+Bronnen:
+- https://learn.microsoft.com/en-us/azure/redis/overview
+- https://learn.microsoft.com/en-us/azure/redis/architecture
+- https://learn.microsoft.com/azure/redis/migrate/migrate-basic-standard-premium-understand
+- https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-whats-new
+
+**Development best practices:**
+- Houd values klein en verdeel grote objecten zo nodig over meerdere gerelateerde keys. Grote requests en responses verhogen latency en kunnen time-outs voor andere opdrachten veroorzaken.
+- Gebruik **pipelining** voor begrensde batches: stuur meerdere opdrachten zonder na iedere opdracht op het antwoord te wachten. Dit vermindert netwerk-roundtrips en verhoogt throughput.
+- Vermijd het blokkerende commando **`KEYS`** in productie. Het scant de volledige keyspace en kan andere opdrachten ophouden.
+- Gebruik **`SCAN`** voor incrementele, niet-blokkerende iteratie. `SCAN` kan tijdens wijzigingen dubbele resultaten opleveren; de applicatie moet daarmee kunnen omgaan.
+- Plaats Redis en de applicatie in dezelfde Azure-regio om netwerk-latency te beperken en betrouwbaarheid te verhogen.
+- Gebruik de servicehostname in plaats van een vast IP-adres, omdat het IP-adres kan veranderen na schalen of platformonderhoud.
+- Monitor **Used Memory Percentage**, CPU en connected clients. Stel alerts in en overweeg opschalen wanneer deze metrics langdurig boven ongeveer **75%** blijven.
+- Schaal vóór de cache volledig belast is; een zwaar belaste cache heeft minder ruimte om data tijdens de schaalactie te herverdelen.
+
+Bron: https://learn.microsoft.com/en-us/azure/redis/best-practices-development
 - **Cron:** tijdschema voor terugkerende taken. In Kubernetes start een **CronJob** volgens zo'n schema Jobs/pods, bijvoorbeeld iedere nacht een batchtaak. Cron is geen monitoringtool.
 - **Prometheus:** verzamelt numerieke tijdreeksmetrics door endpoints periodiek te scrapen. Veel gebruikt voor Kubernetes/AKS; Azure Monitor biedt hiervoor Managed Prometheus.
 - **PromQL:** querytaal om Prometheus-metrics te selecteren, combineren en aggregeren voor dashboards en alerts.
@@ -221,6 +304,276 @@
 - Voorbeeld ordertempo per minuut: `sum(rate(orders_total[5m])) * 60`.
 - Voorbeeld foutpercentage: `sum(rate(payments_failed_total[5m])) / sum(rate(payments_total[5m])) * 100`.
 - Houd labels beperkt tot vaste categorieën zoals `service`, `region` en `status`. Gebruik geen ordernummer of klant-ID als label; dat veroorzaakt te veel unieke time series en hogere kosten.
+
+### RediSearch: vector database in Azure Managed Redis
+
+**RediSearch** is een optionele Redis-module voor indexering en zoeken. Hiermee kan Azure Managed Redis naast gewone key-valueopslag ook full-text-, metadata- en vectorzoekopdrachten uitvoeren. De vectors worden dus in Redis bewaard en door RediSearch geïndexeerd.
+
+**Basisflow voor RAG of semantic search:**
+
+```text
+document → chunks → embeddingmodel → vector + tekst + metadata in Redis
+vraag → embeddingmodel → queryvector → RediSearch → meest vergelijkbare chunks
+```
+
+Een record kan bijvoorbeeld de tekst, embedding, document-ID, tenant, categorie, datum en toegangsrechten bevatten. Die metadata maakt filtering mogelijk voordat of tijdens de vectorvergelijking.
+
+**Vectors ingesten:** ingestie betekent dat brondata wordt verwerkt, omgezet en in de vectoropslag geladen. Voor documenten bestaat de flow meestal uit:
+
+1. Lees de documenten uit de bron, bijvoorbeeld Blob Storage, ADLS of een Delta Lake-tabel.
+2. Splits lange tekst in kleinere **chunks**.
+3. Laat een embeddingmodel iedere chunk omzetten in een vector.
+4. Bewaar per chunk de vector, oorspronkelijke tekst en metadata zoals document-ID, pagina, tenant en toegangsrechten.
+5. RediSearch neemt passende records op in de vectorindex.
+
+```text
+brondata → chunks → embeddingmodel → vectors + metadata → RediSearch-index
+```
+
+**Ingestie** stopt data in de opslag en index. **Retrieval** maakt van een zoekvraag een vector en haalt de meest vergelijkbare records uit de index. Gebruik binnen één index hetzelfde embeddingmodel, datatype en aantal dimensies. Verander je het embeddingmodel of de dimensie, dan moet je de bestaande data doorgaans opnieuw embedden en indexeren.
+
+Voor grotere ladingen kun je records in begrensde batches en met Redis-pipelining schrijven. Houd ook updates en verwijderingen uit het bronsysteem bij, zodat de vectorindex geen verouderde chunks teruggeeft.
+
+**Delta Lake en Parquet als bron:**
+
+- **Parquet** is een kolomgebaseerd bestandsformaat. Het bewaart een schema en comprimeert kolomwaarden efficiënt. Analytische systemen hoeven alleen de benodigde kolommen te lezen, waardoor het meestal sneller en compacter is dan CSV voor grote datasets.
+- **Delta Lake** is een tabel- en transactielaag boven doorgaans Parquet-bestanden. Het voegt onder andere ACID-transacties, schemahandhaving, updates/deletes/merges en versiegeschiedenis met time travel toe.
+- Delta Lake is geen vectordatabase. Het kan de duurzame bron met documenten en metadata zijn; een ingestiepipeline maakt daaruit embeddings en schrijft die naar RediSearch.
+
+```text
+Delta Lake/Parquet → nieuwe of gewijzigde rijen → chunks/embeddings
+                   → Azure Managed Redis + RediSearch
+```
+
+Ezelsbrug: **Parquet = efficiënt bestand; Delta Lake = betrouwbare tabellaag; RediSearch = snelle zoekindex.**
+
+**HASH-opslag versus JSON-opslag versus vector querying:**
+
+Dit zijn geen drie alternatieve zoekmethodes. **HASH en JSON bepalen hoe een record wordt opgeslagen; vector querying bepaalt hoe RediSearch de geïndexeerde vectors doorzoekt.** Een RediSearch-index wordt daarom aangemaakt als `ON HASH` of `ON JSON`.
+
+| Onderdeel | Redis HASH | Redis JSON |
+|---|---|---|
+| Model | Platte map van veld naar waarde | Hiërarchisch document met objecten en arrays |
+| Schrijven | `HSET` | `JSON.SET` |
+| Vectoropslag | Binaire bytes, bijvoorbeeld een `FLOAT32`-buffer | JSON-array met getallen |
+| Metadata | Eenvoudige losse velden | Rijke, geneste structuren en arrays via JSONPath |
+| Sterk punt | Eenvoudig, compact en geschikt voor vaste records | Flexibel documentmodel en meerdere/geneste waarden |
+| Keuze | Prompt, antwoord, tenant en één embedding per key | Complex product/document met geneste metadata of meerdere embeddings |
+
+Voorbeeld van dezelfde roos als HASH:
+
+```text
+HSET rose:42 species "Red Naomi" greenhouse "Amsterdam" embedding <binary FLOAT32>
+```
+
+Als JSON:
+
+```json
+{
+  "species": "Red Naomi",
+  "location": { "greenhouse": "Amsterdam" },
+  "embedding": [0.12, -0.31, 0.84]
+}
+```
+
+RediSearch onderhoudt boven de gekozen records een **secundaire index**. Records met het ingestelde key-prefix worden na `HSET` of `JSON.SET` automatisch geïndexeerd. Daarna kunnen beide opslagvormen met `FT.SEARCH` worden bevraagd via KNN, range en metadatafilters. De zoekvector wordt bij een query doorgaans als binaire vectorparameter aangeleverd, ook wanneer opgeslagen JSON-records hun vector als array bevatten.
+
+**Keuzeregel:** gebruik HASH voor eenvoudige, vaste en compacte records. Gebruik JSON wanneer geneste objecten, arrays, gedeeltelijke updates of meerdere vectorvelden per document nodig zijn. JSON-vectoropslag vereist naast RediSearch ook de RedisJSON-module; plan de benodigde modules tijdens provisioning van Azure Managed Redis.
+
+**Architectuurkeuzes met praktijkvoorbeelden:**
+
+1. **Semantic cache voor een chatbot**
+   - Bewaar per eerder gestelde vraag: prompt, antwoord, tenant, modelversie en één embedding.
+   - Kies **HASH**, omdat het record plat en voorspelbaar is.
+   - Gebruik **HNSW + COSINE + hybrid KNN**: filter eerst op tenant en modelversie en zoek daarna het meest vergelijkbare eerdere verzoek.
+   - Gebruik een similarity/distance-drempel voordat je een antwoord hergebruikt; bij onvoldoende overeenkomst laat je het LLM een nieuw antwoord maken.
+
+2. **Productcatalogus met aanbevelingen**
+   - Een product bevat categorieën, varianten, kenmerken, voorraadlocaties en mogelijk meerdere afbeeldingen.
+   - Kies **JSON** voor de geneste gegevens en arrays.
+   - Gebruik **HNSW** voor een grote catalogus en hybrid KNN om bijvoorbeeld eerst op `inStock`, land en categorie te filteren.
+   - Redis geeft snel vergelijkbare producten; een afzonderlijk bronsysteem blijft verantwoordelijk voor de definitieve product- en voorraaddata.
+
+3. **Ziekteherkenning bij rozen**
+   - Een visionmodel maakt een vector van de gescande roos.
+   - Kies HASH voor één foto en eenvoudige kenmerken; kies JSON als één plant meerdere foto-embeddings, metingen en geneste kasinformatie heeft.
+   - Gebruik **range search** wanneer alleen diagnoses boven een geteste kwaliteitsgrens mogen worden getoond.
+   - Gebruik hybrid filtering op cultivar, groeifase of kas voordat de vectors worden vergeleken.
+
+4. **RAG over bedrijfsdocumenten**
+   - Bewaar originele bestanden duurzaam in Blob Storage/ADLS en eventueel verwerkte tabellen in Delta Lake.
+   - Laat een pipeline documenten chunken, embeddings maken en alleen de zoekbare chunks plus metadata in Redis zetten.
+   - Kies HASH voor één vast chunkrecord; kies JSON wanneer chunks, broninformatie en meerdere vectorvelden als één documentstructuur moeten worden beheerd.
+   - Gebruik hybrid KNN met verplichte filters op `tenantId`, classificatie en toegangsrechten. Autorisatie mag niet alleen achteraf in de applicatie plaatsvinden.
+
+5. **Kleine, exacte referentiedataset**
+   - Bijvoorbeeld enkele duizenden gecertificeerde onderdelen of ziektebeelden.
+   - Kies **FLAT** wanneer iedere vector exact moet worden vergeleken en de dataset klein genoeg is.
+   - Kies range search als een onbekend object ook echt als *geen match* moet kunnen eindigen.
+
+6. **Grote, latencygevoelige zoekdienst**
+   - Bijvoorbeeld miljoenen producten, afbeeldingen of kennisfragmenten.
+   - Kies **HNSW** voor lage querylatency en accepteer dat de zoekactie approximate is.
+   - Reserveer extra geheugen voor de HNSW-graaf en benchmark recall, latency en kosten met representatieve data.
+
+**Infrastructuurkeuzes voor alle RediSearch-scenario's:**
+
+- **Enterprise clustering**, omdat RediSearch dit vereist; accepteer dat de proxy eerder een throughputgrens kan vormen dan bij OSS-clustering.
+- **NoEviction** beschermt de samenhang tussen data en index, maar writes kunnen mislukken wanneer het geheugen vol is. Gebruik capaciteitsmarges en alerts.
+- Kies Memory Optimized bij vooral veel vector-/indexdata, Compute Optimized bij zware queryvolumes en Balanced als startpunt voor gemengde belasting.
+- Schakel RediSearch en eventueel RedisJSON bij provisioning in; wijziging achteraf vraagt doorgaans een nieuwe instance en migratie.
+- Houd de duurzame bron buiten Redis wanneer data opnieuw opgebouwd moet kunnen worden. Redis is dan de snelle serving/indexlaag.
+- Test altijd met echte aantallen, dimensies, filters en gelijktijdige queries; vectorindexen kunnen aanzienlijk meer geheugen gebruiken dan alleen de ruwe vectors.
+
+**Beslisvolgorde:**
+
+```text
+Plat record?                 → HASH
+Geneste data/arrays?         → JSON
+Kleine dataset/exact nodig?  → FLAT
+Groot en lage latency?       → HNSW
+Altijd top K nodig?          → KNN
+Kwaliteitsgrens nodig?       → RANGE
+Tenant/categorie/ACL vereist?→ HYBRID FILTER + KNN/RANGE
+```
+
+**Vectorfuncties:**
+
+- Opslag in Redis **HASH**- of **JSON**-records.
+- Afstandsmetingen: **COSINE**, **L2** (Euclidische afstand) en **IP** (inner product).
+- **KNN:** retourneert de `K` meest vergelijkbare vectors.
+- **Vector range query:** retourneert alle vectors binnen een gekozen afstand.
+- Metadatafilters op onder andere tags, tekst, numerieke waarden en geografische velden.
+- Full-text search en vector search kunnen samen met filters worden gebruikt. Azure Managed Redis heeft geen ingebouwde semantische reranker; eventuele scorefusie of reranking moet de applicatie verzorgen.
+
+**KNN, hybrid en range vergelijken:**
+
+| Queryvorm | Betekenis | Resultaataantal | Praktijkvoorbeeld |
+|---|---|---|---|
+| **KNN** | Zoek de `K` dichtstbijzijnde vectors | Vast maximum, bijvoorbeeld top 5 | Geef altijd de vijf meest vergelijkbare productbeschrijvingen |
+| **Hybrid/filter + KNN** | Filter eerst op metadata/tekst en voer binnen die geldige kandidaten KNN uit | Maximaal `K` | Zoek top 5 documenten, maar alleen voor `tenant=contoso` en `category=legal` |
+| **Vector range** | Geef alle vectors terug die binnen een afstandsdrempel vallen | Variabel: nul, één of veel | Geef alleen resultaten die voldoende op de vraag lijken |
+
+Vereenvoudigde RediSearch-vormen:
+
+```text
+KNN:     *=>[KNN 5 @embedding $query_vec]
+Hybrid:  (@tenant:{contoso})=>[KNN 5 @embedding $query_vec]
+Range:   @embedding:[VECTOR_RANGE 0.20 $query_vec]
+```
+
+Bij een distance score geldt doorgaans: **lager = dichterbij/beter**. KNN retourneert ook resultaten wanneer de beste matches nog steeds slecht zijn; een range query kan daarom nul resultaten teruggeven. Een hybrid query beschermt bijvoorbeeld tenant- en toegangsgrenzen en verkleint de kandidaatset. Dit Redis-gebruik van *hybrid* betekent vector search gecombineerd met filters of tekstvoorwaarden; het is niet automatisch dezelfde ingebouwde RRF/semantic-rankerflow als bij Azure AI Search.
+
+**Voorbeeld: rozen scannen**
+
+Een camera fotografeert een roos en een visionmodel maakt daarvan een embedding. In RediSearch staan embeddings en metadata van bekende rozen en ziektebeelden.
+
+- **KNN:** geef de vijf referentiebeelden die het meest op de gescande roos lijken. Ook bij slechte overeenkomsten worden de beste beschikbare kandidaten teruggegeven.
+- **Hybrid KNN:** filter eerst op bijvoorbeeld `kas=Amsterdam` en `soort=Red Naomi`, en zoek daarna de vijf meest vergelijkbare ziektebeelden binnen die selectie.
+- **Range:** geef alleen ziektebeelden terug waarvan de vectorafstand maximaal `0.20` is.
+
+Voorbeeldafstanden:
+
+| Kandidaat | Afstand | Binnen range 0.20? |
+|---|---:|---|
+| Meeldauw A | 0.05 | Ja |
+| Meeldauw B | 0.12 | Ja |
+| Schimmel C | 0.18 | Ja |
+| Bladluis D | 0.34 | Nee |
+
+Een range query gebruikt dus een **kwaliteitsgrens**, geen vast resultaataantal. `0.00` betekent bij een afstandsmaat een identieke vector; hoe lager de score, hoe dichter de match. Een te strenge grens kan nul resultaten geven en een te ruime grens kan irrelevante matches toelaten. Bepaal de grens daarom met representatieve, gelabelde testdata en meet hoeveel juiste matches worden gevonden en hoeveel onjuiste matches worden toegelaten.
+
+**Vectorindextypen:**
+
+| Index | Werking | Wanneer gebruiken? |
+|---|---|---|
+| **FLAT** | Vergelijkt de query exact met alle vectors | Kleine datasets of wanneer exacte resultaten belangrijker zijn dan snelheid |
+| **HNSW** | Benadert de nearest neighbors via een graaf | Grotere datasets en lage latency; sneller, maar gebruikt extra geheugen en kan een klein deel van de beste matches missen |
+
+**Verplichte ontwerpkeuzes in Azure Managed Redis:**
+
+- Activeer de **RediSearch-module tijdens het aanmaken**; een module kan niet later aan dezelfde instance worden toegevoegd.
+- Kies **Enterprise clustering**. OSS clustering ondersteunt RediSearch niet.
+- Kies de eviction policy **NoEviction**. Bij vol geheugen worden nieuwe writes geweigerd in plaats van bestaande geïndexeerde data ongemerkt te verwijderen.
+- Gebruik Memory Optimized, Balanced of Compute Optimized. **Flash Optimized ondersteunt RediSearch niet.**
+- Reserveer geheugen voor zowel vectors, metadata als de zoekindex; vooral HNSW heeft indexoverhead.
+- De queryvector moet hetzelfde embeddingmodel, datatype en hetzelfde aantal dimensies gebruiken als het geïndexeerde vectorveld.
+
+**Sterke toepassingen:** zeer snelle semantic caching, agent memory, aanbevelingen en RAG waarbij vectors dicht bij sessie- of cachedata moeten staan. Kies eerder **Azure AI Search** wanneer documentindexering, zoekbeheer en ingebouwde semantic ranking de kern van de oplossing vormen; kies Redis wanneer zeer lage latency en integratie met operationele cachedata centraal staan.
+
+**Examenvallen:**
+
+- RediSearch ≠ het embeddingmodel: Azure OpenAI of een ander model maakt de vectors; RediSearch bewaart, indexeert en vergelijkt ze.
+- `DIM` moet exact overeenkomen met de dimensie van het embeddingmodel.
+- **HNSW = snel en approximate**; **FLAT = exact en brute force**.
+- `DIALECT 2` aan het einde van `FT.SEARCH` kiest versie 2 van de RediSearch-queryparser. Vector search en queryparameters zoals `$query_vec` vereisen dialect 2 of hoger. Het is geen SQL-dialect en verandert de opgeslagen data of index niet.
+- RediSearch gevraagd → **Enterprise clustering + NoEviction + module bij provisioning + geen Flash Optimized**.
+- Metadata zoals `tenantId` of access-controlvelden gebruiken om resultaten tot de juiste gebruiker of tenant te beperken.
+
+Bronnen:
+
+- https://learn.microsoft.com/en-us/azure/redis/overview-vector-similarity
+- https://learn.microsoft.com/en-us/azure/redis/redis-modules
+- https://learn.microsoft.com/en-us/azure/architecture/guide/technology-choices/vector-search
+
+### Redis Pub/Sub versus Redis Streams
+
+Beide verspreiden berichten, maar hun betrouwbaarheid en gebruiksdoel verschillen sterk.
+
+| Onderdeel | Redis Pub/Sub | Redis Streams |
+|---|---|---|
+| Model | Live kanaal met publishers en subscribers | Blijvend, geordend logboek van berichten |
+| Schrijven/lezen | `PUBLISH` en `SUBSCRIBE`/`PSUBSCRIBE` | `XADD`, `XREAD` of `XREADGROUP` |
+| Opslag | Berichten worden niet bewaard | Berichten blijven staan tot verwijdering of retentie |
+| Ontvangers | Iedere actieve subscriber op het kanaal krijgt een kopie | Zonder group kunnen lezers onafhankelijk lezen; binnen één consumer group wordt werk verdeeld |
+| Offline consumer | Mist berichten die tijdens de uitval zijn gepubliceerd | Kan later vanaf een stream-ID verder lezen |
+| Acknowledgement | Geen | `XACK` binnen consumer groups |
+| Pending/retry | Geen ingebouwde pendinglijst of recovery | Pending Entries List, `XPENDING`, `XCLAIM` en `XAUTOCLAIM` |
+| Leveringskarakter | **At-most-once**: snel, maar een gemist bericht is weg | Met consumer groups gewoonlijk **at-least-once**; duplicaten zijn mogelijk |
+| Goede toepassing | Live notificaties, invalidaties en vluchtige statusupdates | Jobs, events, audit trail, retries en herstel na een crash |
+
+**Pub/Sub-flow:**
+
+```text
+publisher --PUBLISH--> kanaal --> actieve subscriber A
+                             --> actieve subscriber B
+```
+
+De publisher wacht niet op verwerking en Redis bewaart het bericht niet. Een subscriber die niet verbonden is, ontvangt het bericht dus niet wanneer hij later terugkomt.
+
+**Streams-flow:**
+
+```text
+producer --XADD--> opgeslagen stream --> consumers lezen en verwerken
+                                      --> consumer group houdt pending bij
+                                      --> na succes XACK
+```
+
+**Examenkeuze:**
+- Alle nu verbonden clients moeten onmiddellijk dezelfde tijdelijke melding krijgen → **Pub/Sub**.
+- Berichten mogen niet verdwijnen bij een disconnect, moeten opnieuw gelezen kunnen worden of vragen om retries/acknowledgements → **Streams**.
+- Meerdere workers moeten ieder een deel van dezelfde werklast verwerken → **Streams met een consumer group**.
+
+**Praktijkkeuze:**
+
+- Gebruik **Pub/Sub** voor live dashboards, een typindicator in chat, cache invalidation en actuele koers- of sensordata waarbij een oude update na reconnect geen waarde meer heeft.
+- Gebruik **Streams** voor bestellingen, betalingen, AI-documentverwerking, achtergrondtaken en andere processen waarbij ieder bericht verwerkt, bevestigd, opnieuw geprobeerd of later teruggelezen moet kunnen worden.
+- Een echt chatbericht alleen via Pub/Sub versturen is riskant: een offline ontvanger mist het. Bewaar het bericht daarom in een database of Stream; gebruik Pub/Sub eventueel daarnaast voor de onmiddellijke live melding.
+- Beide combineren kan nuttig zijn: **Streams voor betrouwbare opslag en verwerking; Pub/Sub voor snelle live verspreiding**.
+
+| Praktijkvraag | Kies |
+|---|---|
+| Mag een bericht verloren gaan? | Pub/Sub |
+| Moet een offline consumer later verder kunnen? | Streams |
+| Moeten alle actieve ontvangers dezelfde live melding krijgen? | Pub/Sub |
+| Moeten workers de berichten binnen één groep onderling verdelen? | Streams met consumer group |
+| Zijn acknowledgements, retries of crash recovery nodig? | Streams |
+
+**Nuance bij instabiele verbindingen:** Pub/Sub kan praktisch zijn wanneer alleen de actuele live-status telt en oude meldingen na reconnect waardeloos zijn. Er ontstaat dan geen achterstand die nog verwerkt moet worden. Het is echter niet betrouwbaarder: tijdens een verbroken verbinding gaan berichten verloren. Moet de client gemiste berichten alsnog ontvangen, gebruik dan Streams en hervat vanaf de laatst verwerkte stream-ID. Instabiel internet is op zichzelf dus geen reden om Pub/Sub te kiezen; de vraag is of gemiste berichten belangrijk zijn.
+
+Ezelsbrug: **Pub/Sub is een live radio-uitzending; Streams is een logboek dat je later kunt teruglezen.**
+
+Bron: https://redis.io/docs/latest/develop/interact/pubsub/
 
 ### Redis Streams: consumer groups, retries en crash recovery
 
@@ -950,6 +1303,119 @@ Bronnen:
 - https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/iot-azure-data-explorer
 
 ## Woensdag 7 oktober 2026
+
+### Azure-netwerken: VNets, subnetten en peering
+
+Een **Azure Virtual Network (VNet)** is een regionale, logische netwerkgrens met één of meer CIDR-adresblokken. Een **subnet** verdeelt die adresruimte in kleinere, niet-overlappende segmenten waarin resources worden geplaatst.
+
+Voorbeeld van één geldig ontwerp:
+
+```text
+VNet A — 172.24.0.0/14 — Subscription A — West Europe
+├─ Subnet A: 172.24.0.0/16
+├─ Subnet B: 172.26.0.0/16
+└─ Subnet C: 172.27.0.0/16
+
+VNet B — 10.20.0.0/16 — Subscription B — North Europe
+├─ Subnet D: 10.20.1.0/24
+└─ Subnet E: 10.20.2.0/24
+```
+
+- Een subnetprefix moet binnen de adresruimte van zijn VNet vallen.
+- Subnetten binnen hetzelfde VNet mogen elkaar niet overlappen.
+- Azure reserveert in ieder subnet vijf adressen: de eerste vier en het laatste adres. Naast het normale netwerk- en broadcastadres gebruikt Azure dus **drie extra adressen** voor de default gateway en DNS-mapping; niet voor billing of Defender for Cloud.
+- Resources in subnetten van hetzelfde VNet kunnen elkaar standaard via system routes bereiken. Een NSG, UDR, Azure Firewall of NVA kan verkeer beperken of omleiden.
+
+Voor `192.168.1.0/24` zijn dit:
+
+| Adres | Betekenis |
+|---|---|
+| `192.168.1.0` | Netwerkidentifier |
+| `192.168.1.1` | Door Azure gereserveerd voor de default gateway |
+| `192.168.1.2` | Azure DNS-mapping |
+| `192.168.1.3` | Azure DNS-mapping |
+| `192.168.1.255` | Broadcastadres |
+
+Een `/24` bevat daarom 256 adressen, waarvan **251 bruikbaar** zijn. Het kleinste ondersteunde IPv4-subnet is `/29`: 8 adressen minus 5 reserveringen geeft slechts 3 bruikbare adressen.
+
+**Subscriptions, tenants en regio's:**
+
+- VNet A en VNet B mogen in verschillende resource groups en **verschillende subscriptions** staan.
+- Die subscriptions mogen zelfs aan verschillende **Microsoft Entra-tenants** gekoppeld zijn.
+- Een VNet hoort bij precies één Azure-regio. VNets uit verschillende regio's kunnen via **Global VNet Peering** worden verbonden.
+- Subscription en tenant bepalen vooral eigenaarschap, facturering, identiteit en rechten; ze maken netwerkconnectiviteit niet automatisch onmogelijk.
+- Voor cross-tenant peering zijn passende rechten nodig, doorgaans **Network Contributor** of een custom role op beide VNets. Microsoft beschrijft hiervoor ook gastgebruikers tussen de tenants.
+
+**Cruciaal: adresruimtes mogen bij peering niet overlappen.** Als VNet A bijvoorbeeld `172.26.0.0/16` en `172.27.0.0/16` gebruikt, kan VNet B niet dezelfde bereiken gebruiken wanneer de VNets rechtstreeks moeten worden gepeerd. Azure weigert de peering dan, ongeacht of de VNets in andere subscriptions, tenants of regio's staan.
+
+```text
+VNet A: 172.24.0.0/14   ─┐
+                          ├─ overlap met 172.26/16 en 172.27/16 → geen peering
+VNet B: 172.26.0.0/15   ─┘
+```
+
+Plan adressen daarom centraal voordat teams VNets aanmaken. Houd ook rekening met on-premises netwerken die later via VPN of ExpressRoute worden verbonden.
+
+**VNet peering:**
+
+- **Regional VNet Peering:** VNets in dezelfde regio.
+- **Global VNet Peering:** VNets in verschillende ondersteunde regio's.
+- Peering gebruikt het Microsoft-backbone; resources communiceren via private IP-adressen.
+- Voor een werkende verbinding worden peeringlinks aan beide kanten geconfigureerd. De status wordt daarna **Connected**.
+- Peering is standaard **niet transitief**: A↔B en B↔C betekent niet automatisch A↔C. Gebruik expliciete peering of routing via bijvoorbeeld een hub met Azure Firewall/NVA.
+- Verkeer over peering kan kosten veroorzaken, vooral tussen regio's; controleer actuele tarieven.
+
+**Examenherkenning:**
+
+- Zelfde VNet, verschillende subnetten → routing bestaat standaard; controleer daarna NSG's en UDR's.
+- Twee niet-overlappende VNets rechtstreeks verbinden → VNet peering.
+- Verschillende regio's → Global VNet Peering.
+- Verschillende subscriptions of tenants → mogelijk, mits beide kanten de juiste rechten/configuratie hebben.
+- Overlappende CIDR-blokken → peering kan niet worden aangemaakt; hernummer of ontwerp een andere verbindingsoplossing.
+- Hub-spoke met A↔Hub en B↔Hub → de spokes hebben zonder aanvullende routering geen automatische onderlinge verbinding.
+
+**Hybride verbindingen met Azure:**
+
+| Optie | Verbindt | Pad | Wanneer kiezen? |
+|---|---|---|---|
+| **Point-to-Site (P2S) VPN** | Eén laptop/client ↔ Azure VNet | Versleuteld over publiek internet | Thuiswerker, beheerder of enkele individuele clients. Geen on-premises VPN-apparaat of publiek IP-adres nodig. Ondersteunt onder andere OpenVPN, IKEv2 en SSTP, afhankelijk van client en gateway. |
+| **Site-to-Site (S2S) VPN** | Heel on-premises netwerk/vestiging ↔ Azure VNet | IPsec/IKE-tunnel over publiek internet | Permanente hybride verbinding voor een kantoor, datacenter, dev/test of middelgrote productieomgeving. Vereist een compatibel on-premises VPN-apparaat met een publiek IP-adres. |
+| **ExpressRoute** | On-premises/WAN ↔ Microsoft-cloud | Private verbinding via connectivity provider; niet over publiek internet | Voorspelbare latency, hogere bandbreedte, betrouwbaarheid en private enterprise-connectiviteit. Meestal duurder en complexer dan een VPN. |
+
+- Zowel P2S als S2S gebruikt een Azure **VPN Gateway** in een `GatewaySubnet`.
+- P2S wordt gestart vanaf de individuele client. Authenticatie kan onder andere met Microsoft Entra ID, certificaten of RADIUS.
+- S2S verbindt netwerken en gebruikt IPsec/IKE; routing kan statisch of dynamisch met BGP zijn, afhankelijk van de configuratie.
+- ExpressRoute gebruikt een **ExpressRoute-circuit**, peering via BGP en voor VNet-toegang een ExpressRoute virtual network gateway.
+- ExpressRoute versleutelt verkeer niet automatisch op dezelfde manier als een VPN. Private transport en encryptie zijn verschillende eisen; indien nodig zijn aanvullende encryptieopties mogelijk.
+- Een S2S VPN kan naast ExpressRoute bestaan als failoverpad. Daarvoor gebruikt het VNet afzonderlijke gateways van het type `Vpn` en `ExpressRoute`.
+
+**Ezelsbrug:** **Point** = één apparaat; **Site** = één netwerk/locatie; **ExpressRoute** = private providerroute met voorspelbaardere enterprise-connectiviteit.
+
+**Examenkeuze:** individuele remote gebruiker → P2S. Kantoor of datacenter snel en relatief goedkoop koppelen → S2S. Publiek internet vermijden of voorspelbare hoge capaciteit eisen → ExpressRoute. VPN als backup voor ExpressRoute → coexisting gateways.
+
+**Microsoft Defender for Cloud:**
+
+- Defender for Cloud is een **CNAPP** voor security posture en workload protection; het reserveert zelf geen subnetadressen.
+- **CSPM** beoordeelt continu configuraties en geeft recommendations, regulatory-compliance-inzicht en een **Secure Score**.
+- **CWPP/Defender-plannen** voegen bescherming en threat detection toe voor workloads zoals servers, containers, storage, databases, App Service, Key Vault en serverless functies.
+- Voor netwerken kan Defender for Cloud bijvoorbeeld te ruime NSG-regels, internet exposure en ontbrekende beschermingsmaatregelen signaleren.
+- Defender for Cloud **detecteert en adviseert**; NSG's, Azure Firewall, route tables en Private Endpoints voeren de daadwerkelijke netwerkbeveiliging en routing uit.
+- Foundational CSPM biedt basisposturefuncties; Defender CSPM en workload-specifieke Defender-plannen zijn betaalde uitbreidingen. Controleer steeds welke subscription en resources binnen de gekozen plannen vallen.
+
+**Examenregel:** security posture, recommendations, Secure Score of threat alerts → Defender for Cloud. Pakketten toestaan/blokkeren → NSG of firewall. Verkeer naar een volgend hop sturen → route table/UDR.
+
+Bronnen:
+
+- https://learn.microsoft.com/en-us/azure/virtual-network/virtual-network-manage-peering
+- https://learn.microsoft.com/en-us/azure/virtual-network/create-peering-different-subscriptions
+- https://learn.microsoft.com/en-us/azure/virtual-network/manage-virtual-network
+- https://learn.microsoft.com/en-us/azure/virtual-network/virtual-network-manage-subnet
+- https://learn.microsoft.com/en-us/azure/networking/design-guide/ip-planning
+- https://learn.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-about-vpngateways
+- https://learn.microsoft.com/en-us/azure/vpn-gateway/design
+- https://learn.microsoft.com/en-us/azure/vpn-gateway/point-to-site-about
+- https://learn.microsoft.com/en-us/azure/expressroute/expressroute-introduction
+- https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-cloud-introduction
 
 ## Donderdag 8 oktober 2026
 
