@@ -261,7 +261,7 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
     "gRPC":"G R P C","RRF":"R R F","Qdrant":"Q-drant","Cosmos DB":"Cosmos D B","NoSQL":"no-sequel",
     "OIDC":"O I D C","JWT":"J W T","PaaS":"pass","SaaS":"sass","IaaS":"i-a-a-s","TTL":"T T L",
     "az":"A Z","CLI":"C L I","SDK":"S D K","API":"A P I","PVC":"P V C","CORS":"cores",
-    "dataset":"data set","datasets":"data sets"
+    "dataset":"data set","datasets":"data sets","containerapp":"container app","containerapps":"container apps"
   };
   const PRONUNCIATION_MAP={};Object.keys(PRONUNCIATIONS).forEach(k=>PRONUNCIATION_MAP[k.toLowerCase()]=PRONUNCIATIONS[k]);
   const PRONUNCIATION_RE=new RegExp("\\b("+Object.keys(PRONUNCIATIONS).sort((a,b)=>b.length-a.length).map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")\\b","gi");
