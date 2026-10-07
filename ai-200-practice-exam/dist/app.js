@@ -376,6 +376,7 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
   }
   function audioReshuffle(){stopSpeech();state.pool=shuffle(state.pool);state.idx=0;renderAudio();if(state.playing)speakCurrent()}
   function exitAudio(){stopSpeech();releaseWakeLock();welcome()}
+  function setRate(v){if(isNaN(v))v=1.5;v=Math.min(5,Math.max(0.5,Math.round(v*2)/2));audioRate=v;const el=document.getElementById("aRate");if(el)el.value=v;localStorage.setItem("ai200-audio-rate",audioRate);if(state&&state.playing)speakCurrent()}
 
   function renderAudio(){
     loadVoices();
@@ -391,7 +392,7 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
         <div class="prompt audio-prompt">${promptHTML}</div>
         <div class="audio-answer"><span class="audio-answer-label">Correct answer</span><p class="audio-line">${renderSeg(segs[ai],ai)}</p></div>
         <div class="audio-controls"><button class="secondary" id="aPrev">⏮ Previous</button><button class="primary" id="aPlay">${state.playing?"⏸ Pause":"▶ Play"}</button><button class="secondary" id="aNext">Next ⏭</button><button class="secondary" id="aShuffle">⟳ Reshuffle</button><button class="quiet" id="aExit">Back to menu</button></div>
-        <div class="audio-settings"><label>Voice <select id="aVoice" ${audioVoices.length?"":"disabled"}>${audioVoices.length?audioVoices.map((v,i)=>`<option value="${i}" ${v===audioVoice?"selected":""}>${esc(v.name)} (${esc(v.lang)})</option>`).join(""):"<option>System default</option>"}</select></label><label>Speed <select id="aRate">${[0.75,1,1.25,1.5,2].map(r=>`<option value="${r}" ${r===audioRate?"selected":""}>${r}×</option>`).join("")}</select></label></div>
+        <div class="audio-settings"><label>Voice <select id="aVoice" ${audioVoices.length?"":"disabled"}>${audioVoices.length?audioVoices.map((v,i)=>`<option value="${i}" ${v===audioVoice?"selected":""}>${esc(v.name)} (${esc(v.lang)})</option>`).join(""):"<option>System default</option>"}</select></label><label>Speed <span class="stepper"><button type="button" id="aRateDown" aria-label="Slower">−</button><input type="number" id="aRate" min="0.5" max="5" step="0.5" value="${audioRate}"><button type="button" id="aRateUp" aria-label="Faster">+</button></span></label></div>
         ${speechReady?"":'<p class="warning">This browser does not support in-browser speech synthesis. Open the app in Microsoft Edge or Chrome to hear questions.</p>'}
       </section></main></div>`;
     document.getElementById("aPlay").onclick=()=>state.playing?audioPause():audioPlay();
@@ -400,7 +401,9 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
     document.getElementById("aShuffle").onclick=audioReshuffle;
     document.getElementById("aExit").onclick=exitAudio;
     document.getElementById("aVoice").onchange=e=>{audioVoice=audioVoices[+e.target.value]||audioVoice;if(audioVoice)localStorage.setItem("ai200-audio-voice",audioVoice.name);if(state.playing)speakCurrent()};
-    document.getElementById("aRate").onchange=e=>{audioRate=+e.target.value;localStorage.setItem("ai200-audio-rate",audioRate);if(state.playing)speakCurrent()};
+    document.getElementById("aRate").onchange=e=>setRate(parseFloat(e.target.value));
+    document.getElementById("aRateDown").onclick=()=>setRate(audioRate-0.5);
+    document.getElementById("aRateUp").onclick=()=>setRate(audioRate+0.5);
   }
 
   welcome();
