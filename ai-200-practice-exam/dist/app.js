@@ -277,11 +277,13 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
   if(speechReady)speechSynthesis.addEventListener("voiceschanged",()=>{loadVoices();if(state&&state.mode==="audio")renderAudio()});
   function stopSpeech(){audioToken++;if(speechReady)try{speechSynthesis.cancel()}catch(e){}}
   // Builds the exact spoken string (with respellings) plus display tokens mapped to their spoken char ranges.
+  // Backtick-delimited markdown code is stripped from speech and flagged so it renders as inline code.
   function buildSpokenTokens(text){
-    const tokens=[];let spoken="",last=0,m;
+    const tokens=[];let spoken="",last=0,m,pending="";
     PRONUNCIATION_RE.lastIndex=0;
-    const addLiteral=lit=>{const re=/(\s+)|(\S+)/g;let t;while((t=re.exec(lit))){if(t[1]){spoken+=t[1]}else{const start=spoken.length;spoken+=t[2];tokens.push({display:t[2],start})}}};
-    while((m=PRONUNCIATION_RE.exec(text))){addLiteral(text.slice(last,m.index));const start=spoken.length;spoken+=PRONUNCIATION_MAP[m[0].toLowerCase()];tokens.push({display:m[0],start});last=m.index+m[0].length}
+    const push=(display,spokenText,code)=>{const start=spoken.length;spoken+=spokenText;tokens.push({display,start,code,pre:pending});pending=""};
+    const addLiteral=lit=>{lit.split("`").forEach((seg,gi)=>{const code=gi%2===1,re=/(\s+)|(\S+)/g;let t;while((t=re.exec(seg))){if(t[1]){pending+=t[1];spoken+=t[1]}else{push(t[2],t[2],code)}}})};
+    while((m=PRONUNCIATION_RE.exec(text))){addLiteral(text.slice(last,m.index));push(m[0],PRONUNCIATION_MAP[m[0].toLowerCase()],false);last=m.index+m[0].length}
     addLiteral(text.slice(last));
     return {spoken,tokens};
   }
@@ -326,7 +328,7 @@ function referenceMarkup(x){const link=(label,url)=>/^https?:\/\//.test(url||"")
     segs.push({area:"answer",...buildSpokenTokens(spokenAnswer(qn))});
     return segs;
   }
-  const renderSeg=(seg,si)=>seg.tokens.map((tok,ti)=>`<span class="aw" id="aw-${si}-${ti}">${esc(tok.display)}</span>`).join(" ");
+  const renderSeg=(seg,si)=>seg.tokens.map((tok,ti)=>`${esc(tok.pre||"")}<span class="aw${tok.code?" code":""}" id="aw-${si}-${ti}">${esc(tok.display)}</span>`).join("");
 
   function startAudio(){
     clearInterval(timerId);
